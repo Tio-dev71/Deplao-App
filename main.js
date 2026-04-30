@@ -171,14 +171,25 @@ function updateTrayMenu() {
   tray.setContextMenu(contextMenu);
 }
 
+function broadcastBlockSettings() {
+  const newSettings = { blockSeen: settings.blockSeen, blockTyping: settings.blockTyping };
+  for (const id in browserViews) {
+    if (browserViews[id] && browserViews[id].webContents) {
+      browserViews[id].webContents.send('update-block-settings', newSettings);
+    }
+  }
+}
+
 function toggleBlockSeen(enable) {
   settings.blockSeen = enable;
   saveSettings(settings);
+  broadcastBlockSettings();
 }
 
 function toggleBlockTyping(enable) {
   settings.blockTyping = enable;
   saveSettings(settings);
+  broadcastBlockSettings();
 }
 
 // ============================================================
@@ -400,32 +411,23 @@ function createWindow() {
   });
 
   app.on('session-created', (sess) => {
-    sess.webRequest.onBeforeRequest({ urls: ['*://*.facebook.com/*', '*://*.messenger.com/*'] }, (details, callback) => {
+    // Chặn Request ở cấp độ mạng (Network Level) cho Zalo API
+    sess.webRequest.onBeforeRequest({ urls: ['*://*.zalo.me/*', '*://*.zadn.vn/*'] }, (details, callback) => {
       let cancel = false;
 
       // Chặn Đã xem (Block Seen)
       if (settings.blockSeen) {
-        if (details.url.includes('/change_read_status.php') || details.url.includes('/ajax/mercury/change_read_status.php')) {
+        if (details.url.includes('/api/message/read') || details.url.includes('/api/message/seen') || details.url.includes('read_status')) {
           cancel = true;
-        }
-        if (details.uploadData && details.uploadData.length > 0) {
-          const body = details.uploadData[0].bytes ? details.uploadData[0].bytes.toString() : '';
-          if (body.includes('LSThreadMarkRead') || body.includes('markThreadRead') || body.includes('ThreadMarkReadMutation') || body.includes('"name":"mark_read"')) {
-            cancel = true;
-          }
+          console.log("[DepLao-Main] Đã chặn XHR báo Đã Xem:", details.url);
         }
       }
 
       // Chặn Đang nhập (Block Typing)
       if (settings.blockTyping) {
-        if (details.url.includes('/typ.php') || details.url.includes('/ajax/messaging/typ.php')) {
+        if (details.url.includes('/api/message/typing')) {
           cancel = true;
-        }
-        if (details.uploadData && details.uploadData.length > 0) {
-          const body = details.uploadData[0].bytes ? details.uploadData[0].bytes.toString() : '';
-          if (body.includes('TypingIndicator') || body.includes('LSTypingIndicator') || body.includes('typing_indicator')) {
-            cancel = true;
-          }
+          console.log("[DepLao-Main] Đã chặn XHR báo Đang Nhập:", details.url);
         }
       }
 
@@ -578,6 +580,8 @@ function createWindow() {
     event.returnValue = {
       isDarkMode: settings.isDarkMode,
       alwaysOnTop: settings.alwaysOnTop,
+      blockSeen: settings.blockSeen,
+      blockTyping: settings.blockTyping,
     };
   });
 }
