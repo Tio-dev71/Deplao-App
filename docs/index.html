@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dép Lào — Ứng dụng Zalo Desktop</title>
+    <meta name="description"
+        content="Ứng dụng Zalo Desktop miễn phí. Giao diện Dark Glass sang trọng, thông báo Windows, phím tắt toàn cục, chạy nền System Tray.">
+    <meta name="keywords" content="Zalo, Desktop, Windows, Electron, Facebook Zalo, ứng dụng">
+    <meta name="author" content="Tiodev71">
+    <meta property="og:title" content="Dép Lào — Dép Lào Desktop">
+    <meta property="og:description" content="Ứng dụng Zalo Desktop miễn phí. Giao diện tối sang trọng, mã nguồn mở.">
+    <meta property="og:image" content="">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="/Users/tiodev/Downloads/Zalo/icon.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Animated background -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-inner">
+            <a href="#" class="logo">
+                <img src="" alt="Dép Lào Logo">
+                <span>Dép Lào</span>
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#features">Tính năng</a></li>
+                <li><a href="#install">Cài đặt</a></li>
+                <li><a href="#shortcuts">Phím tắt</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+            <div class="nav-actions">
+                <a href="https://github.com/Tiodev71/Deplao-App.git" class="btn-nav" target="_blank" rel="noopener">
+                    <i class="fab fa-github"></i> GitHub
+                </a>
+                <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <div class="version-pill">
+                        <span class="pulse-dot"></span>
+                        v1.1.0 — Bảo Mật & Cập Nhật Tự Động
+                    </div>
+                    <h1>Zalo Desktop<br><span class="gradient-text"></span></h1>
+                    <p class="hero-desc">Ứng dụng Zalo đầy đủ tính năng, giao diện Dark Glass sang trọng, chạy nền
+                        trên System Tray. Mã nguồn mở, hoàn toàn miễn phí.</p>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <span class="stat-number">E2EE</span>
+                            <span class="stat-label">Mã hóa</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat">
+                            <span class="stat-number">0₫</span>
+                            <span class="stat-label">Chi phí</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat">
+                            <span class="stat-number">100%</span>
+                            <span class="stat-label">Mã nguồn mở</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="app-preview">
+                        <div class="preview-titlebar">
+                            <div class="titlebar-dots">
+                                <span class="dot dot-red"></span>
+                                <span class="dot dot-yellow"></span>
+                                <span class="dot dot-green"></span>
+                            </div>
+                            <span class="titlebar-text">Dép Lào</span>
+                        </div>
+                        <div class="preview-body messenger-preview">
+                            <div class="msg-sidebar">
+                                <div class="msg-contact active">
+                                    <div class="msg-avatar"><i class="fas fa-user"></i></div>
+                                    <div class="msg-info">
+                                        <div class="msg-name">Nguyễn Văn A</div>
+                                        <div class="msg-last">Bạn: Ok, hẹn gặp nhé! 👋</div>
+                                    </div>
+                                    <div class="msg-badge">2</div>
+                                </div>
+                                <div class="msg-contact">
+                                    <div class="msg-avatar"><i class="fas fa-users"></i></div>
+                                    <div class="msg-info">
+                                        <div class="msg-name">Nhóm Dự Án</div>
+                                        <div class="msg-last">Trường: File đã gửi ✅</div>
+                                    </div>
+                                </div>
+                                <div class="msg-contact">
+                                    <div class="msg-avatar"><i class="fas fa-user"></i></div>
+                                    <div class="msg-info">
+                                        <div class="msg-name">Lê Thị B</div>
+                                        <div class="msg-last">Cảm ơn bạn nhiều!</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="preview-footer">
+                            <i class="fas fa-lock"></i> Tin nhắn được mã hóa đầu cuối (E2EE)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Install Section -->
+    <section class="install" id="install">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Bắt đầu</span>
+                <h2>Cài đặt & Sử dụng</h2>
+                <p>Chỉ cần Node.js và vài lệnh đơn giản.</p>
+            </div>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">01</div>
+                    <h3>Tải về</h3>
+                    <p>Clone hoặc tải ZIP mã nguồn từ GitHub.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">02</div>
+                    <h3>Cài đặt</h3>
+                    <p>Chạy <code>npm install</code> để cài thư viện.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">03</div>
+                    <h3>Khởi chạy</h3>
+                    <p>Chạy <code>npm start</code> để mở ứng dụng.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">04</div>
+                    <h3>Build .exe</h3>
+                    <p>Chạy <code>npm run build</code> để tạo file cài đặt.</p>
+                </div>
+            </div>
+            <div class="install-cta">
+                <a href="https://github.com/Tiodev71/Deplao-App/archive/refs/heads/main.zip"
+                    class="btn-primary btn-large">
+                    <i class="fas fa-download"></i> Tải về ngay — Miễn phí
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Shortcuts Section -->
+    <section class="shortcuts" id="shortcuts">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Phím tắt</span>
+                <h2>Thao tác nhanh</h2>
+            </div>
+            <div class="shortcut-grid">
+                <div class="shortcut-card">
+                    <div class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>M</kbd></div>
+                    <p>Mở / Ẩn cửa sổ Zalo</p>
+                </div>
+                <div class="shortcut-card">
+                    <div class="shortcut-keys"><kbd>F12</kbd></div>
+                    <p>Mở Developer Tools</p>
+                </div>
+                <div class="shortcut-card">
+                    <div class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>R</kbd></div>
+                    <p>Tải lại trang</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq" id="faq">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Hỏi đáp</span>
+                <h2>Câu hỏi thường gặp</h2>
+            </div>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+                        Tại sao cần ứng dụng này?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Ứng dụng này đóng gói giao diện web Zalo bằng Electron, mang lại trải nghiệm desktop
+                            chuyên nghiệp với thông báo, phím tắt và System
+                            Tray.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+                        Có an toàn không? Tin nhắn có bị đọc?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Hoàn toàn an toàn. Ứng dụng chỉ load trang web chính thức của Zalo (chat.zalo.me). Tin
+                            nhắn vẫn được mã hóa đầu cuối E2EE.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+                        Cần cài gì trước?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p><a href="https://nodejs.org/" target="_blank">Node.js</a> phiên bản LTS (20.x trở lên). Sau
+                            đó chạy <code>npm install</code> và <code>npm start</code>.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+                        Làm sao để tùy biến giao diện?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Chỉnh sửa file <code>custom_style.css</code>. Bạn có thể đổi màu nền, độ mờ kính
+                            (backdrop-filter), hoặc ẩn/hiện bất kỳ thành phần nào bằng CSS.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+                        Hỗ trợ Windows nào?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Windows 10 và Windows 11 (64-bit). Ứng dụng chạy trên Electron (Chromium) nên tương thích
+                            rộng rãi.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <img src="" alt="" width="28">
+                        <span>Dép Lào</span>
+                    </div>
+                    <p>Ứng dụng Dép Lào Desktop. Miễn phí & mã nguồn mở.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Liên kết</h4>
+                    <a href="https://github.com/Tiodev71/Deplao-App.git" target="_blank" rel="noopener"><i
+                            class="fab fa-github"></i> GitHub</a>
+                    <a href="https://www.facebook.com/tiodev71/" target="_blank" rel="noopener"><i
+                            class="fab fa-facebook"></i>
+                        Facebook</a>
+                    <a href="https://t.me/tiodev71" target="_blank" rel="noopener"><i class="fab fa-telegram"></i>
+                        Telegram</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 Tiodev — Made with ❤️ for the community.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

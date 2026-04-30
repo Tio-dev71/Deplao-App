@@ -1,0 +1,69 @@
+{
+  "name": "Dép Lào",
+  "version": "1.1.0",
+  "description": "Ứng dụng Dép Lào Desktop - Chạy trên nhân Chrome (Chromium)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "build:portable": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.Zalo.desktop",
+    "productName": "Zalo",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "shortcutName": "Dép Lào"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "custom_style.css",
+      "icon.ico",
+      "icon.png",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Tiodev71",
+        "repo": "Zalo"
+      }
+    ]
+  },
+  "keywords": [
+    "Zalo",
+    "Zalo",
+    "desktop",
+    "electron"
+  ],
+  "author": "Tiodev71",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.3"
+  }
+}
