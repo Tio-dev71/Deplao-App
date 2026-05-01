@@ -30,7 +30,7 @@ const injectionScript = `
     const originalFetch = window.fetch;
     window.fetch = async function(...args) {
       const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : '');
-      if (window.__DepLaoBlockSeen && (url.includes('/api/message/read') || url.includes('/api/message/seen') || url.includes('read_status'))) {
+      if (window.__DepLaoBlockSeen && (url.includes('/api/message/read') || url.includes('/api/message/seen'))) {
         return new Response(JSON.stringify({error: 0, msg: "Blocked by DepLao"}), { status: 200 });
       }
       if (window.__DepLaoBlockTyping && (url.includes('/api/message/typing') || url.includes('typ.php'))) {
@@ -51,7 +51,7 @@ const injectionScript = `
     XMLHttpRequest.prototype.send = function(...args) {
       const url = this._url || '';
       
-      if (window.__DepLaoBlockSeen && (url.includes('/api/message/read') || url.includes('/api/message/seen') || url.includes('read_status'))) {
+      if (window.__DepLaoBlockSeen && (url.includes('/api/message/read') || url.includes('/api/message/seen'))) {
          Object.defineProperty(this, 'readyState', {get: () => 4});
          Object.defineProperty(this, 'status', {get: () => 200});
          Object.defineProperty(this, 'responseText', {get: () => '{"error":0}'});

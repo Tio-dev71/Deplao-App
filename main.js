@@ -413,18 +413,35 @@ function createWindow() {
 
   app.on('session-created', (sess) => {
     // Chặn Request ở cấp độ mạng (Network Level) cho Zalo API
+    // CHÚ Ý: Chỉ chặn POST/PUT request gửi trạng thái (seen/typing),
+    //         KHÔNG chặn GET request vì đó là sync dữ liệu về máy.
     sess.webRequest.onBeforeRequest({ urls: ['*://*.zalo.me/*', '*://*.zadn.vn/*'] }, (details, callback) => {
       let cancel = false;
+      const method = (details.method || '').toUpperCase();
 
-      // Chặn Đã xem (Block Seen)
+      // Bỏ qua GET request — đây là request đồng bộ dữ liệu, không được chặn
+      if (method === 'GET') {
+        callback({ cancel: false });
+        return;
+      }
+
+      // Bỏ qua các endpoint đồng bộ tin nhắn quan trọng
+      const syncSafePatterns = ['/sync', '/conversation', '/api/message/list', '/api/message/get', '/api/group'];
+      const isSyncSafe = syncSafePatterns.some(p => details.url.includes(p));
+      if (isSyncSafe) {
+        callback({ cancel: false });
+        return;
+      }
+
+      // Chặn Đã xem (Block Seen) — chỉ chặn POST/PUT gửi trạng thái đã xem
       if (settings.blockSeen) {
-        if (details.url.includes('/api/message/read') || details.url.includes('/api/message/seen') || details.url.includes('read_status')) {
+        if (details.url.includes('/api/message/read') || details.url.includes('/api/message/seen')) {
           cancel = true;
           console.log("[DepLao-Main] Đã chặn XHR báo Đã Xem:", details.url);
         }
       }
 
-      // Chặn Đang nhập (Block Typing)
+      // Chặn Đang nhập (Block Typing) — chỉ chặn POST/PUT gửi trạng thái đang nhập
       if (settings.blockTyping) {
         if (details.url.includes('/api/message/typing')) {
           cancel = true;
