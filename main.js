@@ -504,11 +504,32 @@ function createWindow() {
       });
       browserViews[profile.id] = view;
       setupWebContents(view.webContents, profile.id);
+
+      // Cài đặt proxy
+      const sess = session.fromPartition(profile.partition);
+      if (profile.proxy) {
+        sess.setProxy({ proxyRules: profile.proxy });
+        console.log(`[DepLao] Đã cấu hình Proxy [${profile.proxy}] cho tài khoản ${profile.name}`);
+      } else {
+        sess.setProxy({ proxyRules: 'direct://' });
+      }
+
       const url = ZALO_URL;
       view.webContents.loadURL(url, { userAgent: USER_AGENT });
     }
     mainWindow.setBrowserView(browserViews[profile.id]);
     updateBrowserViewBounds();
+  });
+
+  ipcMain.on('update-profile-settings', (event, profile) => {
+    const sess = session.fromPartition(profile.partition);
+    if (profile.proxy) {
+      sess.setProxy({ proxyRules: profile.proxy });
+      console.log(`[DepLao] Đã cập nhật Proxy [${profile.proxy}] cho tài khoản ${profile.name}`);
+    } else {
+      sess.setProxy({ proxyRules: 'direct://' });
+      console.log(`[DepLao] Đã gỡ Proxy cho tài khoản ${profile.name}`);
+    }
   });
 
   ipcMain.on('set-browserview-visibility', (event, visible) => {

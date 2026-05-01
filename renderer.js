@@ -75,6 +75,7 @@ let tempAvatarPath = null;
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const nameInput = document.getElementById('profile-name-input');
+const proxyInput = document.getElementById('profile-proxy-input');
 const platformInput = document.getElementById('profile-platform-input');
 const avatarPreview = document.getElementById('avatar-preview');
 const avatarImg = document.getElementById('avatar-img');
@@ -88,6 +89,7 @@ function openModal(profileToEdit = null) {
   
   modalTitle.innerText = profileToEdit ? 'Chỉnh sửa tài khoản' : 'Thêm tài khoản';
   nameInput.value = profileToEdit ? profileToEdit.name : '';
+  proxyInput.value = profileToEdit && profileToEdit.proxy ? profileToEdit.proxy : '';
   platformInput.value = profileToEdit && profileToEdit.platform ? profileToEdit.platform : 'zalo';
   document.getElementById('modal-delete').style.display = profileToEdit ? 'block' : 'none';
   
@@ -152,9 +154,11 @@ document.getElementById('modal-save').onclick = () => {
     editingProfile.name = name;
     editingProfile.avatar = tempAvatarPath;
     editingProfile.platform = platformInput.value;
+    editingProfile.proxy = proxyInput.value.trim();
+    ipcRenderer.send('update-profile-settings', editingProfile);
   } else {
     const id = Date.now().toString();
-    const p = { id, name, avatar: tempAvatarPath, partition: `persist:nick_${id}`, platform: platformInput.value };
+    const p = { id, name, avatar: tempAvatarPath, partition: `persist:nick_${id}`, platform: platformInput.value, proxy: proxyInput.value.trim() };
     profiles.push(p);
     activeProfileId = id;
   }
