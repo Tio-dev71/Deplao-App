@@ -193,7 +193,10 @@
       </div>
       <input type="text" id="profile-name-input" class="modal-input" placeholder="Nhập tên hiển thị (VD: Nick Clone)" />
       <input type="text" id="profile-proxy-input" class="modal-input" placeholder="Proxy: http://1.2.3.4:80 (để trống nếu không dùng)" style="margin-top: -8px;" />
-      <input type="hidden" id="profile-platform-input" value="zalo" />
+      <select id="profile-platform-input" class="modal-input" style="margin-top: -8px; cursor: pointer;">
+        <option value="zalo">💬 Zalo</option>
+        <option value="teams">🟣 Microsoft Teams</option>
+      </select>
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <button class="modal-btn cancel" id="modal-delete" style="background:#e74c3c; color:white; display:none;">Xóa</button>
         <div style="margin-left:auto;">

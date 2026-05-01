@@ -284,7 +284,7 @@ function updateBrowserViewBounds() {
 
 function setupWebContents(contents, profileId) {
   contents.setWindowOpenHandler(({ url }) => {
-    if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me')) {
+    if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me') || url.includes('microsoft.com') || url.includes('live.com') || url.includes('office.com') || url.includes('skype.com') || url.includes('microsoftonline.com')) {
       return { action: 'allow' };
     }
     shell.openExternal(url);
@@ -436,7 +436,7 @@ function createWindow() {
 
     sess.setPermissionRequestHandler((webContents, permission, callback) => {
       const url = webContents.getURL();
-      const isAllowed = url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me');
+      const isAllowed = url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me') || url.includes('microsoft.com') || url.includes('live.com') || url.includes('office.com') || url.includes('skype.com') || url.includes('microsoftonline.com');
       if (isAllowed) {
         const allowedPermissions = [
           'notifications', 'media', 'mediaKeySystem', 'microphone',
@@ -452,7 +452,7 @@ function createWindow() {
 
     sess.setPermissionCheckHandler((webContents, permission) => {
       const url = webContents?.getURL() || '';
-      if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('zalo.me')) {
+      if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('zalo.me') || url.includes('microsoft.com') || url.includes('live.com') || url.includes('office.com') || url.includes('skype.com') || url.includes('microsoftonline.com')) {
         return true;
       }
       return false;
@@ -514,7 +514,7 @@ function createWindow() {
         sess.setProxy({ proxyRules: 'direct://' });
       }
 
-      const url = ZALO_URL;
+      const url = profile.platform === 'teams' ? 'https://teams.microsoft.com/' : ZALO_URL;
       view.webContents.loadURL(url, { userAgent: USER_AGENT });
     }
     mainWindow.setBrowserView(browserViews[profile.id]);

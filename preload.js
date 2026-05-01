@@ -20,6 +20,12 @@ const injectionScript = `
   window.__DepLaoBlockTyping = ${settings.blockTyping || false};
 
   (function() {
+    // Chỉ kích hoạt bộ chặn nếu đang ở trang Zalo
+    if (!window.location.hostname.includes('zalo.me') && !window.location.hostname.includes('zadn.vn')) {
+      console.log("[DepLao] Không phải trang Zalo. Tắt bộ chặn.");
+      return;
+    }
+
     // 1. Chặn Fetch API
     const originalFetch = window.fetch;
     window.fetch = async function(...args) {
