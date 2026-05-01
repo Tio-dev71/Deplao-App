@@ -39,65 +39,62 @@ const injectionScript = `
       return originalFetch.apply(this, args);
     };
 
-    // 2. Chặn XMLHttpRequest (XHR)
-    const originalXHR = window.XMLHttpRequest;
-    window.XMLHttpRequest = function() {
-      const xhr = new originalXHR();
-      const originalOpen = xhr.open;
-      xhr.open = function(method, url, ...rest) {
-        this._url = url;
-        return originalOpen.call(this, method, url, ...rest);
-      };
-      const originalSend = xhr.send;
-      xhr.send = function(...args) {
-        if (window.__DepLaoBlockSeen && this._url && (this._url.includes('/api/message/read') || this._url.includes('/api/message/seen') || this._url.includes('read_status'))) {
-           Object.defineProperty(this, 'readyState', {get: () => 4});
-           Object.defineProperty(this, 'status', {get: () => 200});
-           Object.defineProperty(this, 'responseText', {get: () => '{"error":0}'});
-           if (this.onreadystatechange) this.onreadystatechange();
-           if (this.onload) this.onload();
-           return;
-        }
-        if (window.__DepLaoBlockTyping && this._url && (this._url.includes('/api/message/typing') || this._url.includes('typ.php'))) {
-           Object.defineProperty(this, 'readyState', {get: () => 4});
-           Object.defineProperty(this, 'status', {get: () => 200});
-           Object.defineProperty(this, 'responseText', {get: () => '{"error":0}'});
-           if (this.onreadystatechange) this.onreadystatechange();
-           if (this.onload) this.onload();
-           return;
-        }
-        return originalSend.apply(this, args);
-      };
-      return xhr;
+    // 2. Chặn XMLHttpRequest (XHR) an toàn hơn bằng cách override prototype
+    const originalXHROpen = XMLHttpRequest.prototype.open;
+    const originalXHRSend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+      this._url = typeof url === 'string' ? url : (url ? url.toString() : '');
+      return originalXHROpen.call(this, method, url, ...rest);
     };
 
-    // 3. Chặn WebSocket
-    const originalWebSocket = window.WebSocket;
-    window.WebSocket = function(url, protocols) {
-      const ws = new originalWebSocket(url, protocols);
-      const originalSend = ws.send;
-      ws.send = function(data) {
-        let shouldDrop = false;
-        try {
-          if (typeof data === 'string') {
-            if (window.__DepLaoBlockSeen && (data.includes('"cmd":97') || data.includes('"action":"read"') || data.includes('"seen"'))) {
-              shouldDrop = true;
-            }
-            if (window.__DepLaoBlockTyping && (data.includes('"cmd":121') || data.includes('"cmd":122') || data.includes('"action":"typing"'))) {
-              shouldDrop = true;
-            }
+    XMLHttpRequest.prototype.send = function(...args) {
+      const url = this._url || '';
+      
+      if (window.__DepLaoBlockSeen && (url.includes('/api/message/read') || url.includes('/api/message/seen') || url.includes('read_status'))) {
+         Object.defineProperty(this, 'readyState', {get: () => 4});
+         Object.defineProperty(this, 'status', {get: () => 200});
+         Object.defineProperty(this, 'responseText', {get: () => '{"error":0}'});
+         if (this.onreadystatechange) this.onreadystatechange();
+         if (this.onload) this.onload();
+         return;
+      }
+      
+      if (window.__DepLaoBlockTyping && (url.includes('/api/message/typing') || url.includes('typ.php'))) {
+         Object.defineProperty(this, 'readyState', {get: () => 4});
+         Object.defineProperty(this, 'status', {get: () => 200});
+         Object.defineProperty(this, 'responseText', {get: () => '{"error":0}'});
+         if (this.onreadystatechange) this.onreadystatechange();
+         if (this.onload) this.onload();
+         return;
+      }
+      
+      return originalXHRSend.apply(this, args);
+    };
+
+    // 3. Chặn WebSocket an toàn hơn bằng cách override prototype
+    const originalWSSend = WebSocket.prototype.send;
+    WebSocket.prototype.send = function(data) {
+      let shouldDrop = false;
+      try {
+        if (typeof data === 'string') {
+          // Bỏ qua check '"seen"' chung chung vì có thể chặn nhầm payload đồng bộ
+          if (window.__DepLaoBlockSeen && (data.includes('"cmd":97') || data.includes('"action":"read"'))) {
+            shouldDrop = true;
           }
-        } catch (e) {
-          console.error('DepLao WS Intercept Error:', e);
+          if (window.__DepLaoBlockTyping && (data.includes('"cmd":121') || data.includes('"cmd":122') || data.includes('"action":"typing"'))) {
+            shouldDrop = true;
+          }
         }
-        
-        if (shouldDrop) {
-          console.log("[DepLao] Đã chặn packet WebSocket gửi trạng thái:", data);
-          return;
-        }
-        return originalSend.call(this, data);
-      };
-      return ws;
+      } catch (e) {
+        console.error('DepLao WS Intercept Error:', e);
+      }
+      
+      if (shouldDrop) {
+        console.log("[DepLao] Đã chặn packet WebSocket gửi trạng thái:", data);
+        return;
+      }
+      return originalWSSend.call(this, data);
     };
     
     console.log("[DepLao] Đã khởi tạo bộ chặn Zalo. Block Seen:", window.__DepLaoBlockSeen, ", Block Typing:", window.__DepLaoBlockTyping);

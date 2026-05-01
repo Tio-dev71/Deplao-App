@@ -87,6 +87,7 @@ let unreadCount = 0;
 
 let browserViews = {}; // { profileId: BrowserView }
 let activeProfileId = null;
+let proxyCredentials = {}; // { "ip:port": { username, password } }
 
 // ============================================================
 //  TẠO ICON BADGE
@@ -284,7 +285,7 @@ function updateBrowserViewBounds() {
 
 function setupWebContents(contents, profileId) {
   contents.setWindowOpenHandler(({ url }) => {
-    if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me') || url.includes('microsoft.com') || url.includes('live.com') || url.includes('office.com') || url.includes('skype.com') || url.includes('microsoftonline.com')) {
+    if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me') || url.includes('microsoft.com') || url.includes('live.com') || url.includes('office.com') || url.includes('skype.com') || url.includes('microsoftonline.com') || url.includes('google.com') || url.includes('gmail.com') || url.includes('gstatic.com') || url.includes('googleusercontent.com') || url.includes('accounts.google.com')) {
       return { action: 'allow' };
     }
     shell.openExternal(url);
@@ -436,7 +437,7 @@ function createWindow() {
 
     sess.setPermissionRequestHandler((webContents, permission, callback) => {
       const url = webContents.getURL();
-      const isAllowed = url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me') || url.includes('microsoft.com') || url.includes('live.com') || url.includes('office.com') || url.includes('skype.com') || url.includes('microsoftonline.com');
+      const isAllowed = url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me') || url.includes('microsoft.com') || url.includes('live.com') || url.includes('office.com') || url.includes('skype.com') || url.includes('microsoftonline.com') || url.includes('google.com') || url.includes('gmail.com') || url.includes('gstatic.com') || url.includes('googleusercontent.com');
       if (isAllowed) {
         const allowedPermissions = [
           'notifications', 'media', 'mediaKeySystem', 'microphone',
@@ -452,7 +453,7 @@ function createWindow() {
 
     sess.setPermissionCheckHandler((webContents, permission) => {
       const url = webContents?.getURL() || '';
-      if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('zalo.me') || url.includes('microsoft.com') || url.includes('live.com') || url.includes('office.com') || url.includes('skype.com') || url.includes('microsoftonline.com')) {
+      if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('zalo.me') || url.includes('microsoft.com') || url.includes('live.com') || url.includes('office.com') || url.includes('skype.com') || url.includes('microsoftonline.com') || url.includes('google.com') || url.includes('gmail.com') || url.includes('gstatic.com') || url.includes('googleusercontent.com')) {
         return true;
       }
       return false;
@@ -508,13 +509,23 @@ function createWindow() {
       // Cài đặt proxy
       const sess = session.fromPartition(profile.partition);
       if (profile.proxy) {
-        sess.setProxy({ proxyRules: profile.proxy });
-        console.log(`[DepLao] Đã cấu hình Proxy [${profile.proxy}] cho tài khoản ${profile.name}`);
+        let proxyRules = profile.proxy;
+        const parts = profile.proxy.trim().split(':');
+        if (parts.length === 4) {
+          proxyRules = `http://${parts[0]}:${parts[1]}`;
+          proxyCredentials[`${parts[0]}:${parts[1]}`] = { username: parts[2], password: parts[3] };
+        } else if (parts.length === 2 && !profile.proxy.includes('://')) {
+          proxyRules = `http://${parts[0]}:${parts[1]}`;
+        }
+        sess.setProxy({ proxyRules });
+        console.log(`[DepLao] Đã cấu hình Proxy [${proxyRules}] cho tài khoản ${profile.name}`);
       } else {
         sess.setProxy({ proxyRules: 'direct://' });
       }
 
-      const url = profile.platform === 'teams' ? 'https://teams.microsoft.com/' : ZALO_URL;
+      let url = ZALO_URL;
+      if (profile.platform === 'teams') url = 'https://teams.microsoft.com/';
+      else if (profile.platform === 'gmail') url = 'https://mail.google.com/';
       view.webContents.loadURL(url, { userAgent: USER_AGENT });
     }
     mainWindow.setBrowserView(browserViews[profile.id]);
@@ -524,8 +535,16 @@ function createWindow() {
   ipcMain.on('update-profile-settings', (event, profile) => {
     const sess = session.fromPartition(profile.partition);
     if (profile.proxy) {
-      sess.setProxy({ proxyRules: profile.proxy });
-      console.log(`[DepLao] Đã cập nhật Proxy [${profile.proxy}] cho tài khoản ${profile.name}`);
+      let proxyRules = profile.proxy;
+      const parts = profile.proxy.trim().split(':');
+      if (parts.length === 4) {
+        proxyRules = `http://${parts[0]}:${parts[1]}`;
+        proxyCredentials[`${parts[0]}:${parts[1]}`] = { username: parts[2], password: parts[3] };
+      } else if (parts.length === 2 && !profile.proxy.includes('://')) {
+        proxyRules = `http://${parts[0]}:${parts[1]}`;
+      }
+      sess.setProxy({ proxyRules });
+      console.log(`[DepLao] Đã cập nhật Proxy [${proxyRules}] cho tài khoản ${profile.name}`);
     } else {
       sess.setProxy({ proxyRules: 'direct://' });
       console.log(`[DepLao] Đã gỡ Proxy cho tài khoản ${profile.name}`);
@@ -671,8 +690,18 @@ app.whenReady().then(() => {
 });
 
 // ============================================================
-//  XỬ LÝ THOÁT
+//  XỬ LÝ THOÁT VÀ LOGIN TRÁNH LỖI PROXY
 // ============================================================
+app.on('login', (event, webContents, details, authInfo, callback) => {
+  if (authInfo.isProxy) {
+    const hostPort = `${authInfo.host}:${authInfo.port}`;
+    if (proxyCredentials[hostPort]) {
+      event.preventDefault();
+      callback(proxyCredentials[hostPort].username, proxyCredentials[hostPort].password);
+    }
+  }
+});
+
 app.on('before-quit', () => {
   isQuitting = true;
   if (mainWindow) {
