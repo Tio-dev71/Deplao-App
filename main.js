@@ -29,7 +29,7 @@ const fs = require('fs');
 const ZALO_URL = 'https://chat.zalo.me';
 const APP_ID = 'com.zalo.desktop';
 const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 ZaloPC/24.5.1 Zalo-Mac/24.5.1';
 
 // ============================================================
 //  CHỐNG CHẠY TRÙNG LẶP (Single Instance Lock)
@@ -115,7 +115,7 @@ function createBadgeIcon(count) {
 //  TẠO SYSTEM TRAY
 // ============================================================
 function createTray() {
-  const iconPath = '/Users/tiodev/Downloads/Zalo/icon.png';
+  const iconPath = path.join(__dirname, 'icon.png');
   let trayIcon;
   try {
     trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
@@ -399,7 +399,7 @@ function createWindow() {
     minWidth: 400,
     minHeight: 300,
     title: 'Zalo',
-    icon: '/Users/tiodev/Downloads/Zalo/icon.png',
+    icon: path.join(__dirname, 'icon.png'),
     backgroundColor: settings.isDarkMode ? '#242526' : '#ffffff',
     show: !settings.startMinimized,
     autoHideMenuBar: true,
@@ -435,7 +435,7 @@ function createWindow() {
 
       // Chặn Đã xem (Block Seen) — chỉ chặn POST/PUT gửi trạng thái đã xem
       if (settings.blockSeen) {
-        if (details.url.includes('/api/message/read') || details.url.includes('/api/message/seen')) {
+        if ((details.url.includes('/api/message/read') || details.url.includes('/api/message/seen')) && !details.url.includes('read_status')) {
           cancel = true;
           console.log("[DepLao-Main] Đã chặn XHR báo Đã Xem:", details.url);
         }

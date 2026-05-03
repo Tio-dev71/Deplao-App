@@ -6,6 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
     "build:portable": "electron-builder --win portable --x64"
   },
   "build": {
@@ -23,6 +24,22 @@
           ]
         }
       ]
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "icon.png",
+      "category": "public.app-category.social-networking"
+    },
+    "dmg": {
+      "title": "Zalo",
+      "artifactName": "Zalo-${version}-mac.${ext}"
     },
     "nsis": {
       "oneClick": false,
