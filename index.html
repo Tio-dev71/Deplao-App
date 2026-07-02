@@ -516,6 +516,15 @@
       box-shadow: 0 0 0 4px rgba(110, 168, 255, .16);
     }
 
+    .modal-select option {
+      background: #121b2f;
+      color: #fff;
+    }
+    body.light-mode .modal-select option {
+      background: #fff;
+      color: #0f172a;
+    }
+
     .modal-textarea {
       min-height: 110px;
       resize: vertical;
@@ -1050,8 +1059,17 @@
               <option value="assist">Assist mode an toàn</option>
             </select>
           </div>
-          <div class="row mb-12 mt-16"><span class="muted">Campaign chỉ chạy với profile nền tảng Zalo. Mode nhiều tài
-              khoản sẽ lần lượt chuyển từng Zalo account và gửi vào hội thoại đang mở của account đó.</span><span
+          <div class="section-head mt-16 mb-12">
+            <h4 class="section-title">Chọn người nhận (Mode Auto / Assist)</h4>
+          </div>
+          <div class="row mb-12" style="justify-content: flex-start; gap: 8px;">
+            <button class="modal-btn cancel" onclick="renderCampaignTargets('crm')" style="font-size: 12px;">Danh bạ CRM</button>
+            <button class="modal-btn cancel" onclick="renderCampaignTargets('recent')" style="font-size: 12px;">Hội thoại gần đây</button>
+          </div>
+          <div id="campaign-target-list" class="list-scroll mb-16" style="max-height: 180px; border: 1px solid var(--line); border-radius: 12px; padding: 12px;">
+            <div class="muted">Vui lòng chọn nguồn để hiển thị danh sách nhận...</div>
+          </div>
+          <div class="row mb-12 mt-16"><span class="muted">Mode Zalo Accounts sẽ tự bỏ qua danh sách người nhận này và gửi 1 tin duy nhất vào hội thoại đang mở ở các account Zalo.</span><span
               id="campaign-target-count" class="pill done">0 target</span></div>
           <div class="row mt-16"><button id="campaign-create" class="modal-btn save">Tạo campaign Zalo</button><button
               id="campaign-run-active" class="modal-btn cancel">Chạy campaign chọn</button></div>

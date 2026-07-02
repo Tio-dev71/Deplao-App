@@ -10,8 +10,13 @@ async function getMySubscription(req, res) {
 
   if (!subscription) {
     return res.json({
+      id: null,
       plan: null,
+      planCode: null,
+      planName: null,
       status: 'none',
+      cycle: null,
+      currentPeriodStart: null,
       trialEndsAt: null,
       currentPeriodEnd: null,
       isActive: false,
@@ -24,8 +29,13 @@ async function getMySubscription(req, res) {
   }
 
   return res.json({
+    id: subscription.id,
     plan: subscription.planCode,
+    planCode: subscription.planCode,
+    planName: subscription.plan ? subscription.plan.name : subscription.planCode,
     status: subscription.status,
+    cycle: subscription.cycle,
+    currentPeriodStart: subscription.currentPeriodStart,
     trialEndsAt: subscription.trialEndsAt,
     currentPeriodEnd: subscription.currentPeriodEnd,
     isActive: isSubscriptionActive(subscription),

@@ -185,12 +185,14 @@ function updateTrayMenu() {
     { label: '🚀 Khởi động cùng Windows', type: 'checkbox', checked: settings.autoLaunch, click: (item) => toggleAutoLaunch(item.checked) },
     { label: '📌 Thu nhỏ xuống Tray khi đóng', type: 'checkbox', checked: settings.minimizeToTray, click: (item) => { settings.minimizeToTray = item.checked; saveSettings(settings); } },
     { type: 'separator' },
-    { label: '🛡️ Bảo mật', submenu: [
-      { label: 'Chặn hiển thị "Đã xem"', type: 'checkbox', checked: settings.blockSeen, click: (item) => toggleBlockSeen(item.checked) },
-      { label: 'Chặn hiển thị "Đang nhập"', type: 'checkbox', checked: settings.blockTyping, click: (item) => toggleBlockTyping(item.checked) },
-      { label: 'ZaDark Shield', type: 'checkbox', checked: settings.zadarkShield, click: (item) => toggleZadarkShield(item.checked) },
-      { label: 'Khóa khi mở ứng dụng', type: 'checkbox', checked: settings.lockOnStartup, click: (item) => { settings.lockOnStartup = item.checked; saveSettings(settings); } },
-    ] },
+    {
+      label: '🛡️ Bảo mật', submenu: [
+        { label: 'Chặn hiển thị "Đã xem"', type: 'checkbox', checked: settings.blockSeen, click: (item) => toggleBlockSeen(item.checked) },
+        { label: 'Chặn hiển thị "Đang nhập"', type: 'checkbox', checked: settings.blockTyping, click: (item) => toggleBlockTyping(item.checked) },
+        { label: 'ZaDark Shield', type: 'checkbox', checked: settings.zadarkShield, click: (item) => toggleZadarkShield(item.checked) },
+        { label: 'Khóa khi mở ứng dụng', type: 'checkbox', checked: settings.lockOnStartup, click: (item) => { settings.lockOnStartup = item.checked; saveSettings(settings); } },
+      ]
+    },
     { type: 'separator' },
     { label: '⬇️ Kiểm tra cập nhật', click: () => checkForUpdates(true) },
     { type: 'separator' },
@@ -278,7 +280,7 @@ function setupAutoUpdater() {
     }
     isManualUpdateCheck = false;
   });
-  setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 5000);
+  setTimeout(() => autoUpdater.checkForUpdates().catch(() => { }), 5000);
 }
 let isManualUpdateCheck = false;
 function checkForUpdates(manual = false) { isManualUpdateCheck = manual; autoUpdater.checkForUpdates().catch(err => setUpdateState({ status: 'error', message: (err.message || err.toString()).split('\n')[0] })); }
@@ -346,7 +348,7 @@ function setupWebContents(contents, profileId) {
               ? 'platform-whatsapp'
               : 'platform-generic';
       contents.insertCSS(`html, body { --nine-meta-platform: ${platformClass}; } html { color-scheme: dark; } body { min-height: 100vh; } html.${platformClass}, body.${platformClass} {}`);
-      contents.executeJavaScript(`document.documentElement.classList.add('${platformClass}'); document.body && document.body.classList.add('${platformClass}');`, true).catch(() => {});
+      contents.executeJavaScript(`document.documentElement.classList.add('${platformClass}'); document.body && document.body.classList.add('${platformClass}');`, true).catch(() => { });
       contents.insertCSS(fs.readFileSync(path.join(__dirname, 'custom_style.css'), 'utf8'));
     } catch (e) { }
   });
@@ -401,7 +403,7 @@ function createWindow() {
       const domainMatch = cookie.domain && ['zalo.me', 'messenger.com', 'facebook.com', 'whatsapp.com', 'telegram.org'].some(d => cookie.domain.includes(d));
       if (!removed && cookie.session && domainMatch) {
         const prefix = cookie.domain.startsWith('.') ? 'www' : '';
-        sess.cookies.set({ url: `https://${prefix}${cookie.domain}${cookie.path}`, name: cookie.name, value: cookie.value, domain: cookie.domain, path: cookie.path, secure: cookie.secure, httpOnly: cookie.httpOnly, expirationDate: Math.floor(Date.now() / 1000) + 31536000 }).catch(() => {});
+        sess.cookies.set({ url: `https://${prefix}${cookie.domain}${cookie.path}`, name: cookie.name, value: cookie.value, domain: cookie.domain, path: cookie.path, secure: cookie.secure, httpOnly: cookie.httpOnly, expirationDate: Math.floor(Date.now() / 1000) + 31536000 }).catch(() => { });
       }
     });
     sess.webRequest.onBeforeRequest({ urls: ['*://*.zalo.me/*', '*://*.zadn.vn/*'] }, (details, callback) => {
@@ -514,15 +516,15 @@ function createWindow() {
       sess.setProxy({ proxyRules });
     } else sess.setProxy({ proxyRules: 'direct://' });
   });
-  ipcMain.on('set-browserview-visibility', (event, visible) => { 
-    if (!mainWindow) return; 
+  ipcMain.on('set-browserview-visibility', (event, visible) => {
+    if (!mainWindow) return;
     isBrowserViewVisible = visible;
-    if (visible && !appLocked && activeProfileId && browserViews[activeProfileId]) { 
-      mainWindow.setBrowserView(browserViews[activeProfileId]); updateBrowserViewBounds(); 
-    } else mainWindow.setBrowserView(null); 
+    if (visible && !appLocked && activeProfileId && browserViews[activeProfileId]) {
+      mainWindow.setBrowserView(browserViews[activeProfileId]); updateBrowserViewBounds();
+    } else mainWindow.setBrowserView(null);
   });
   ipcMain.on('delete-profile', (event, id) => { if (browserViews[id]) { browserViews[id].webContents.destroy(); delete browserViews[id]; } });
-  
+
   ipcMain.on('profile-info-extracted', (event, info) => {
     let senderId = null;
     for (const [id, view] of Object.entries(browserViews)) {
@@ -536,6 +538,13 @@ function createWindow() {
       if (view.webContents === event.sender) { senderId = id; break; }
     }
     if (senderId) sendToRenderer('current-chat-info', { ...info, profileId: senderId });
+  });
+  ipcMain.on('recent-chats-extracted', (event, chats) => {
+    let senderId = null;
+    for (const [id, view] of Object.entries(browserViews)) {
+      if (view.webContents === event.sender) { senderId = id; break; }
+    }
+    if (senderId) sendToRenderer('recent-chats', { chats, profileId: senderId });
   });
 
   ipcMain.on('update-badge', (event, count) => { if (count !== unreadCount) { const hadNewMessages = count > unreadCount; unreadCount = count; updateBadge(unreadCount); if (hadNewMessages && !mainWindow.isFocused()) mainWindow.flashFrame(true); } });
@@ -641,6 +650,75 @@ function createWindow() {
         })();
       `);
       return result || { ok: true };
+    } catch (err) { return { ok: false, message: err.message || String(err) }; }
+  });
+  ipcMain.handle('zalo-switch-and-send', async (event, chatName, message, options = {}) => {
+    const requestedProfileId = options.profileId || activeProfileId;
+    const view = requestedProfileId && browserViews[requestedProfileId];
+    if (!view || !message || !chatName) return { ok: false, message: 'Thiếu thông tin người nhận, tin nhắn, hoặc tab Zalo.' };
+    try {
+      const safeName = JSON.stringify(String(chatName).trim());
+      const safeMessage = JSON.stringify(String(message));
+      const result = await view.webContents.executeJavaScript(`
+        (function() {
+          function getVisibleText(el) { return ((el && (el.innerText || el.textContent)) || '').replace(/\\s+/g, ' ').trim(); }
+          function clickElement(el) {
+            try {
+              el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+              el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+              el.click();
+              return true;
+            } catch (e) { return false; }
+          }
+          var items = document.querySelectorAll('.msg-item, [data-id], .group-board-item');
+          var targetEl = null;
+          for (var i = 0; i < items.length; i++) {
+            var nameEl = items[i].querySelector('.conv-item-title__name, .item-title__name, .item-title, .truncate');
+            if (nameEl && getVisibleText(nameEl) === ${safeName}) {
+              targetEl = items[i];
+              break;
+            }
+          }
+          if (!targetEl) return { ok: false, message: 'Không tìm thấy cuộc hội thoại: ' + ${safeName} };
+          clickElement(targetEl);
+          return { ok: true, wait: true };
+        })();
+      `);
+      if (!result || !result.ok) return result || { ok: false, message: 'Failed to switch chat.' };
+      
+      // Wait for chat to load
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      const sendResult = await view.webContents.executeJavaScript(`
+        (function() {
+          function findInput() {
+            return document.querySelector('[contenteditable="true"][role="textbox"]') ||
+              document.querySelector('[contenteditable="true"]') ||
+              document.querySelector('textarea') ||
+              document.querySelector('input[type="text"]');
+          }
+          function dispatchInput(el) {
+            el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: ${safeMessage} }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          var input = findInput();
+          if (!input) return { ok: false, message: 'Không tìm thấy ô nhập chat Zalo sau khi chuyển.' };
+          input.focus();
+          document.execCommand('selectAll', false, null);
+          document.execCommand('insertText', false, ${safeMessage});
+          if (input.value !== undefined) input.value = ${safeMessage};
+          dispatchInput(input);
+          var sendBtn = document.querySelector('[data-translate-title="STR_SEND"]') ||
+            document.querySelector('button[class*="send"]') ||
+            document.querySelector('.chat-input__send-btn') ||
+            document.querySelector('[aria-label="Gửi"]') ||
+            document.querySelector('[aria-label="Send"]');
+          if (sendBtn) sendBtn.click();
+          else input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
+          return { ok: true, message: 'Đã gửi lệnh chèn/gửi vào Zalo.' };
+        })();
+      `);
+      return sendResult || { ok: true };
     } catch (err) { return { ok: false, message: err.message || String(err) }; }
   });
   ipcMain.on('renderer-ready', () => sendToRenderer('lock-state', { locked: settings.lockOnStartup || appLocked, hasPassword: !!settings.lockPasswordHash, zadarkShield: settings.zadarkShield }));

@@ -68,7 +68,7 @@ function normalizeProfiles(list) {
   return arr.map((p) => {
     let avatarUrl = p.avatar;
     if (avatarUrl && !avatarUrl.startsWith('http') && !avatarUrl.startsWith('data:')) {
-      avatarUrl = ''; 
+      avatarUrl = '';
     }
     return { ...p, avatar: avatarUrl, platform: p.platform || 'zalo', partition: p.partition || `persist:nick_${p.id}` };
   });
@@ -211,6 +211,7 @@ function switchProfile(id) {
   if (profile) ipcRenderer.send('switch-profile', profile);
   renderCRMCurrentChat();
   renderCampaigns();
+  if (document.getElementById('campaign-target-list')) document.getElementById('campaign-target-list').innerHTML = '<div class="muted">Đã đổi profile, vui lòng tải lại danh sách...</div>';
 }
 function openModal(profileToEdit = null) {
   editingProfile = profileToEdit;
@@ -399,14 +400,32 @@ function renderCampaigns() {
     item.querySelector('[data-action="stop"]').onclick = () => stopCampaign(id);
   });
 }
+function renderCampaignTargets(source) {
+  const list = document.getElementById('campaign-target-list');
+  const activeProfile = getActiveProfile();
+  if (!activeProfile) return;
+  if (source === 'crm') {
+      const targets = workspaceData.crmContacts.filter((c) => c.profileId === activeProfile.id);
+      list.innerHTML = targets.length ? targets.map((t) => `<label style="display:flex; align-items:center; gap:10px; padding:6px; cursor:pointer;"><input type="checkbox" name="camp_target" value="${escapeHtml(t.name)}" checked> <span style="font-size:13px;">${escapeHtml(t.name)} (${escapeHtml(t.phone)})</span></label>`).join('') : '<div class="muted">Chưa có CRM contact cho profile này.</div>';
+  } else if (source === 'recent') {
+      const targets = workspaceData.recentChats || [];
+      list.innerHTML = targets.length ? targets.map((name) => `<label style="display:flex; align-items:center; gap:10px; padding:6px; cursor:pointer;"><input type="checkbox" name="camp_target" value="${escapeHtml(name)}" checked> <span style="font-size:13px;">${escapeHtml(name)}</span></label>`).join('') : '<div class="muted">Chưa tải được hội thoại gần đây. Hãy vào tab Zalo để extension quét.</div>';
+  }
+}
+
 function createCampaign() {
   const activeProfile = getActiveProfile();
   if (!activeProfile) return alert('Chưa có profile.');
   if ((activeProfile.platform || 'zalo') !== 'zalo') return alert('Tính năng gửi hàng loạt chỉ áp dụng cho tài khoản Zalo. Hãy chọn một profile Zalo trước.');
   const zaloProfiles = getZaloProfiles();
   if (!zaloProfiles.length) return alert('Workspace chưa có tài khoản Zalo nào.');
-  const targets = workspaceData.crmContacts.filter((contact) => contact.profileId === activeProfile.id);
-  if (!targets.length) return alert('Profile Zalo hiện tại chưa có contact CRM nào.');
+  const mode = document.getElementById('campaign-mode').value;
+  const selectedTargets = Array.from(document.querySelectorAll('input[name="camp_target"]:checked')).map(el => ({ id: el.value, name: el.value, phone: '' }));
+  
+  if (mode !== 'zalo_accounts' && !selectedTargets.length) {
+    return alert('Vui lòng chọn ít nhất 1 người nhận từ danh sách!');
+  }
+  
   const name = document.getElementById('campaign-name').value.trim();
   const message = document.getElementById('campaign-message').value.trim();
   if (!name || !message) return alert('Vui lòng nhập tên chiến dịch và nội dung.');
@@ -415,16 +434,16 @@ function createCampaign() {
     id: `camp_${Date.now()}`,
     platform: 'zalo',
     profileId: activeProfile.id,
-    profileIds: document.getElementById('campaign-mode').value === 'zalo_accounts' ? zaloProfiles.map((profile) => profile.id) : [activeProfile.id],
+    profileIds: mode === 'zalo_accounts' ? zaloProfiles.map((profile) => profile.id) : [activeProfile.id],
     name,
     message,
     delayMin: Number(document.getElementById('campaign-delay-min').value || 2500),
     delayMax: Number(document.getElementById('campaign-delay-max').value || 6500),
     batchSize,
-    mode: document.getElementById('campaign-mode').value,
+    mode,
     status: 'draft',
     createdAt: Date.now(),
-    targets: targets.slice(0, batchSize).map((target) => ({ id: target.id, name: target.name, phone: target.phone })),
+    targets: mode === 'zalo_accounts' ? [] : selectedTargets.slice(0, batchSize),
     accountLogs: [],
     logs: [],
   };
@@ -460,7 +479,7 @@ async function runCampaign(campaignId) {
     await wait(randomBetween(latest.delayMin, latest.delayMax));
     try {
       const result = latest.mode === 'auto'
-        ? await ipcRenderer.invoke('active-chat-send-text', latest.message, { platform: 'zalo', profileId: latest.profileId })
+        ? await ipcRenderer.invoke('zalo-switch-and-send', target.name, latest.message, { profileId: latest.profileId })
         : { ok: true, assisted: true, message: 'Assist mode: đã lưu log, bạn tự mở đúng hội thoại để gửi.' };
       const refreshed = workspaceData.campaigns.find((entry) => entry.id === campaignId);
       refreshed.logs.push({ id: `${Date.now()}-${target.id}`, targetId: target.id, targetName: target.name, status: result.ok ? 'sent' : 'failed', detail: result.message || '', createdAt: Date.now() });
@@ -830,6 +849,18 @@ const shieldButton = document.getElementById('btn-shield');
 if (shieldButton) shieldButton.classList.toggle('active', !!settings.zadarkShield);
 
 const API_BASE_URL = localStorage.getItem('API_URL') || 'https://api.tiodev.io.vn/v1';
+const APP_VERSION = require('./package.json').version;
+function getOrCreateDeviceId() {
+  const existing = localStorage.getItem('device_id');
+  if (existing) return existing;
+  const created = `desktop_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+  localStorage.setItem('device_id', created);
+  return created;
+}
+function clearAuthSession() {
+  localStorage.removeItem('access_token');
+  accessToken = null;
+}
 let accessToken = localStorage.getItem('access_token') || null;
 const authOverlay = document.getElementById('auth-overlay');
 const expiredOverlay = document.getElementById('expired-overlay');
@@ -864,13 +895,19 @@ authSubmit.onclick = async () => {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, appVersion: require('./package.json').version, os: process.platform }),
+      body: JSON.stringify({
+        email,
+        password,
+        deviceId: getOrCreateDeviceId(),
+        appVersion: APP_VERSION,
+        os: process.platform,
+      }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Đăng nhập thất bại');
     accessToken = data.accessToken;
     localStorage.setItem('access_token', accessToken);
-    checkSubscription();
+    await checkSubscription();
   } catch (err) {
     authError.innerText = err.message;
     authError.style.display = 'block';
@@ -879,22 +916,33 @@ authSubmit.onclick = async () => {
     authSubmit.disabled = false;
   }
 };
-document.getElementById('expired-logout').onclick = () => { localStorage.removeItem('access_token'); accessToken = null; expiredOverlay.style.display = 'none'; showAuth(); };
+document.getElementById('expired-logout').onclick = () => { clearAuthSession(); expiredOverlay.style.display = 'none'; showAuth(); };
 async function checkSubscription() {
-  if (!accessToken) return showAuth();
+  if (!accessToken) {
+    showAuth();
+    return false;
+  }
   try {
     const res = await fetch(`${API_BASE_URL}/me/subscription`, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (res.status === 401 || res.status === 403) {
-      localStorage.removeItem('access_token');
-      accessToken = null;
-      return showAuth();
+      clearAuthSession();
+      showAuth();
+      return false;
+    }
+    if (!res.ok) {
+      throw new Error(`subscription_http_${res.status}`);
     }
     const data = await res.json();
-    if (data.isActive === false) showExpired('Gói đăng ký của bạn đã hết hạn. Vui lòng thanh toán gia hạn để tiếp tục sử dụng.', data.upgradeUrl || 'https://tiodev.io.vn/pricing');
-    else unlockAppFromAuth();
+    if (!data || data.isActive === false) {
+      showExpired('Gói đăng ký của bạn đã hết hạn. Vui lòng thanh toán gia hạn để tiếp tục sử dụng.', data?.upgradeUrl || 'https://tiodev.io.vn/pricing');
+      return false;
+    }
+    unlockAppFromAuth();
+    return true;
   } catch (err) {
     console.error('Lỗi kiểm tra bản quyền:', err);
-    unlockAppFromAuth();
+    showExpired('Không thể xác minh bản quyền lúc này. Vui lòng kiểm tra kết nối mạng hoặc đăng nhập lại để tiếp tục sử dụng.', 'https://tiodev.io.vn/pricing');
+    return false;
   }
 }
 
@@ -903,6 +951,13 @@ renderAll();
 if (activeProfileId) switchProfile(activeProfileId);
 ipcRenderer.send('renderer-ready');
 ipcRenderer.send('get-downloads');
+
+ipcRenderer.on('recent-chats', (event, info) => {
+  if (info.profileId === activeProfileId) {
+    workspaceData.recentChats = info.chats;
+  }
+});
+
 if (settings.lockOnStartup) showLockOverlay(!hasLockPassword);
 if (!settings.lockOnStartup) checkSubscription();
 setInterval(() => { if (accessToken && !appLocked) checkSubscription(); }, 15 * 60 * 1000);

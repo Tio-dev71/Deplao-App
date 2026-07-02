@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('messengerApp', {
   getSettings: () => ipcRenderer.sendSync('get-settings'),
   sendProfileInfo: (info) => ipcRenderer.send('profile-info-extracted', info),
   sendCurrentChatInfo: (info) => ipcRenderer.send('current-chat-info-extracted', info),
+  sendRecentChats: (chats) => ipcRenderer.send('recent-chats-extracted', chats),
   sendTextToActiveChat: (message) => ipcRenderer.invoke('active-chat-send-text', message),
 });
 
@@ -221,57 +222,28 @@ function runInjection(currentSettings) {
       }
       setTimeout(setupQuickReplyShortcuts, 3000);
 
-      function getVisibleText(el) {
-        return ((el && (el.innerText || el.textContent)) || '').replace(/\s+/g, ' ').trim();
-      }
-      function clickElement(el) {
-        if (!el || el.__depLaoAutoClicked) return false;
-        el.__depLaoAutoClicked = true;
-        try {
-          el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
-          el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
-          el.click();
-          return true;
-        } catch (e) { return false; }
-      }
-      function autoHandleZaloPrompts() {
+      // Auto extract recent chats
+      function extractRecentChats() {
         if (!isZalo) return;
+        var chats = [];
         try {
-          var all = Array.from(document.querySelectorAll('button, [role="button"], a, div, span'));
-          var allowBtn = all.find(function(el) {
-            var text = getVisibleText(el);
-            return text === 'Cho phép' || text === 'Allow' || text === 'Đồng ý' || text === 'OK';
-          });
-          if (allowBtn) clickElement(allowBtn);
-
-          var banner = all.find(function(el) {
-            var text = getVisibleText(el);
-            return text.includes('Sử dụng Zalo PC') || text.includes('Tải ngay') || text.includes('Zalo PC để lưu trữ');
-          });
-          if (banner) {
-            var scope = banner.closest('[class]') || banner.parentElement || document.body;
-            var closeBtn = Array.from(scope.querySelectorAll('button, [role="button"], i, svg, span, div')).find(function(el) {
-              var text = getVisibleText(el);
-              var label = (el.getAttribute('aria-label') || el.getAttribute('title') || '').toLowerCase();
-              var cls = (el.className || '').toString().toLowerCase();
-              return text === '×' || text === 'x' || label.includes('close') || label.includes('đóng') || cls.includes('close') || cls.includes('dismiss');
-            });
-            if (!closeBtn) {
-              closeBtn = Array.from(document.querySelectorAll('button, [role="button"], i, svg, span, div')).find(function(el) {
-                var rect = el.getBoundingClientRect();
-                var text = getVisibleText(el);
-                return rect.top < 60 && rect.right > window.innerWidth - 80 && (text === '×' || text === 'x' || rect.width <= 40);
-              });
+          var items = document.querySelectorAll('.msg-item, [data-id], .group-board-item');
+          items.forEach(function(item) {
+            var nameEl = item.querySelector('.conv-item-title__name, .item-title__name, .item-title, .truncate');
+            if (nameEl) {
+               var name = nameEl.innerText.trim();
+               if (name && !chats.includes(name)) {
+                  chats.push(name);
+               }
             }
-            if (closeBtn) clickElement(closeBtn);
+          });
+          if (chats.length > 0) {
+            window.messengerApp.sendRecentChats(chats);
           }
         } catch (e) {}
       }
-      setTimeout(autoHandleZaloPrompts, 1200);
-      setInterval(autoHandleZaloPrompts, 2500);
-      try {
-        new MutationObserver(function() { autoHandleZaloPrompts(); }).observe(document.documentElement, { childList: true, subtree: true });
-      } catch (e) {}
+      setInterval(extractRecentChats, 6000);
+
 
       // Auto extract profile name & avatar
       function extractCurrentChatInfo() {
