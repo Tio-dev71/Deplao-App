@@ -826,10 +826,7 @@ function createWindow() {
                 'textarea'
               ];
               for (var i = 0; i < selectors.length; i++) {
-                var found = Array.from(document.querySelectorAll(selectors[i])).find(function(el) {
-                  var rect = el.getBoundingClientRect && el.getBoundingClientRect();
-                  return isVisible(el) && rect && rect.left > 280;
-                });
+                var found = Array.from(document.querySelectorAll(selectors[i])).find(isVisible);
                 if (found) return found;
               }
               return null;
@@ -844,33 +841,21 @@ function createWindow() {
             var headerEl = null;
             var headerText = '';
 
-            // 1. Direct text match in top-right area
-            var leafs = Array.from(document.querySelectorAll('div, span, p, h1, h2, h3, h4, b, strong')).filter(el => el.children.length === 0);
-            for (var i = 0; i < leafs.length; i++) {
-              var el = leafs[i];
-              var txt = normalizeText(el.innerText || el.textContent);
-              if (txt && isMatch(txt) && isVisible(el)) {
-                 var rect = el.getBoundingClientRect();
-                 if (rect.left > 280 && rect.top < 160) {
-                    headerEl = el;
-                    headerText = txt;
-                    break;
-                 }
-              }
-            }
-
-            // 2. Fallback to generic header selectors
-            if (!headerEl) {
-              var headerSelectors = ['header [class*="title"]', 'header [class*="name"]', '.header-title', '.title-name', '.conv-title', '#chatView header span', '[data-id="div_Main_Header"] [class*="title"]'];
-              for (var i = 0; i < headerSelectors.length; i++) {
-                headerEl = Array.from(document.querySelectorAll(headerSelectors[i])).find(function(el) {
-                  var rect = el.getBoundingClientRect && el.getBoundingClientRect();
-                  return isVisible(el) && rect && rect.left > 280 && rect.top < 160;
-                });
-                if (headerEl) {
-                  headerText = normalizeText(headerEl.innerText || headerEl.textContent);
-                  break;
-                }
+            var headerSelectors = [
+              'header [class*="title"]', 
+              'header [class*="name"]', 
+              '.header-title', 
+              '.title-name', 
+              '.conv-title', 
+              '#chatView header span', 
+              '[data-id="div_Main_Header"] [class*="title"]'
+            ];
+            
+            for (var i = 0; i < headerSelectors.length; i++) {
+              headerEl = Array.from(document.querySelectorAll(headerSelectors[i])).find(isVisible);
+              if (headerEl) {
+                headerText = normalizeText(headerEl.innerText || headerEl.textContent);
+                if (isMatch(headerText)) break;
               }
             }
             
