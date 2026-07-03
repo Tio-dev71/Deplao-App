@@ -633,14 +633,13 @@ function createWindow() {
               '#richInput',
               '#chatInput',
               '[id*="input_line_"]',
+              '#chatView [contenteditable="true"]',
               '.chat-input [contenteditable="true"]',
-              '[contenteditable="true"][role="textbox"]',
-              '[contenteditable="true"]',
-              '[role="textbox"]',
-              'textarea'
+              '[contenteditable="true"][placeholder*="Nhập"]',
+              '[contenteditable="true"][placeholder*="nhắn"]'
             ];
             for (var i = 0; i < selectors.length; i++) {
-              var found = Array.from(document.querySelectorAll(selectors[i])).find(isVisible);
+              var found = document.querySelector(selectors[i]);
               if (found) return found;
             }
             return null;
@@ -808,25 +807,19 @@ function createWindow() {
             function normalizeText(value) {
               return String(value || '').normalize('NFC').replace(/[\\u200B-\\u200D\\uFEFF]/g, '').replace(/\\s+/g, ' ').trim();
             }
-            function isVisible(el) {
-              if (!el) return false;
-              var rect = el.getBoundingClientRect && el.getBoundingClientRect();
-              var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
-              return !!rect && rect.width > 0 && rect.height > 0 && (!style || (style.visibility !== 'hidden' && style.display !== 'none'));
-            }
+            
             function findInput() {
               var selectors = [
                 '#richInput',
                 '#chatInput',
                 '[id*="input_line_"]',
+                '#chatView [contenteditable="true"]',
                 '.chat-input [contenteditable="true"]',
-                '[contenteditable="true"][role="textbox"]',
-                '[contenteditable="true"]',
-                '[role="textbox"]',
-                'textarea'
+                '[contenteditable="true"][placeholder*="Nhập"]',
+                '[contenteditable="true"][placeholder*="nhắn"]'
               ];
               for (var i = 0; i < selectors.length; i++) {
-                var found = Array.from(document.querySelectorAll(selectors[i])).find(isVisible);
+                var found = document.querySelector(selectors[i]);
                 if (found) return found;
               }
               return null;
@@ -842,17 +835,19 @@ function createWindow() {
             var headerText = '';
 
             var headerSelectors = [
-              'header [class*="title"]', 
-              'header [class*="name"]', 
-              '.header-title', 
-              '.title-name', 
-              '.conv-title', 
+              '#chatView header [class*="title"]', 
+              '#chatView header [class*="name"]', 
+              '#chatView .header-title', 
+              '#chatView .title-name', 
+              '#chatView .conv-title', 
               '#chatView header span', 
-              '[data-id="div_Main_Header"] [class*="title"]'
+              '[data-id="div_Main_Header"] [class*="title"]',
+              '#chatView [class*="title"]',
+              '#chatView [class*="name"]'
             ];
             
             for (var i = 0; i < headerSelectors.length; i++) {
-              headerEl = Array.from(document.querySelectorAll(headerSelectors[i])).find(isVisible);
+              headerEl = document.querySelector(headerSelectors[i]);
               if (headerEl) {
                 headerText = normalizeText(headerEl.innerText || headerEl.textContent);
                 if (isMatch(headerText)) break;
