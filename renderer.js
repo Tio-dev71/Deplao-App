@@ -917,6 +917,12 @@ authSubmit.onclick = async () => {
   }
 };
 document.getElementById('expired-logout').onclick = () => { clearAuthSession(); expiredOverlay.style.display = 'none'; showAuth(); };
+document.getElementById('btn-logout').onclick = () => { 
+  if (confirm('Bạn có chắc chắn muốn đăng xuất tài khoản 9Meta?')) {
+    clearAuthSession(); 
+    showAuth(); 
+  }
+};
 async function checkSubscription() {
   if (!accessToken) {
     showAuth();
