@@ -1,14 +1,14 @@
 const nodemailer = require('nodemailer');
 
-// Brevo SMTP configuration
+// SMTP configuration (Default to Resend)
 const createTransporter = () => {
   return nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false,
+    host: process.env.SMTP_HOST || 'smtp.resend.com',
+    port: Number(process.env.SMTP_PORT) || 465,
+    secure: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) === 465 : true,
     auth: {
-      user: process.env.SMTP_USER || 'aec817001@smtp-brevo.com',
-      pass: process.env.SMTP_PASS, // Passed via .env to prevent Github blocking push
+      user: process.env.SMTP_USER || 'resend',
+      pass: process.env.SMTP_PASS, // API Key from Resend or App Password
     },
   });
 };
@@ -22,7 +22,7 @@ async function sendPasswordResetEmail(toEmail, code) {
   const transporter = createTransporter();
 
   const mailOptions = {
-    from: `"9Meta Admin" <${process.env.SMTP_USER || 'aec817001@smtp-brevo.com'}>`,
+    from: `"9Meta Admin" <${process.env.SMTP_FROM || 'support@tiodev.io.vn'}>`,
     to: toEmail,
     subject: 'Mã xác nhận khôi phục mật khẩu 9Meta',
     html: `
