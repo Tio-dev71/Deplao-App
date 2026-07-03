@@ -620,7 +620,7 @@ function createWindow() {
       const currentUrl = view.webContents.getURL() || '';
       if (!currentUrl.includes('zalo.me')) return { ok: false, message: 'Tab hiện tại không phải Zalo.' };
       const safeMessage = JSON.stringify(String(message));
-      const result = await view.webContents.executeJavaScript(`
+      const focusResult = await view.webContents.executeJavaScript(`
         (function() {
           function isVisible(el) {
             if (!el) return false;
@@ -648,18 +648,25 @@ function createWindow() {
             }
             return null;
           }
-          function setText(el, text) {
-            el.focus();
-            if (el.value !== undefined) {
-              el.value = text;
-              el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
-              el.dispatchEvent(new Event('change', { bubbles: true }));
-              return;
-            }
-            document.execCommand('selectAll', false, null);
-            document.execCommand('insertText', false, text);
-            el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
+          var input = findInput();
+          if (!input) return { ok: false, message: 'Không tìm thấy ô nhập chat Zalo.' };
+          input.focus();
+          document.execCommand('selectAll', false, null);
+          return { ok: true };
+        })();
+      `);
+      if (!focusResult || !focusResult.ok) return focusResult;
+
+      view.webContents.insertText(String(message));
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const sendResult = await view.webContents.executeJavaScript(`
+        (function() {
+          function isVisible(el) {
+            if (!el) return false;
+            var rect = el.getBoundingClientRect && el.getBoundingClientRect();
+            var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+            return !!rect && rect.width > 0 && rect.height > 0 && (!style || (style.visibility !== 'hidden' && style.display !== 'none'));
           }
           function findSendButton() {
             var selectors = ['[data-translate-title="STR_SEND"]', 'button[class*="send"]', '.chat-input__send-btn', '[aria-label="Gửi"]', '[aria-label="Send"]'];
@@ -669,16 +676,17 @@ function createWindow() {
             }
             return null;
           }
-          var input = findInput();
-          if (!input) return { ok: false, message: 'Không tìm thấy ô nhập chat Zalo.' };
-          setText(input, ${safeMessage});
-          var sendBtn = findSendButton();
-          if (sendBtn) sendBtn.click();
-          else input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
-          return { ok: true, message: 'Đã gửi lệnh chèn/gửi vào tab Zalo.' };
+          var btn = findSendButton();
+          if (btn) { btn.click(); return { ok: true }; }
+          return { ok: false };
         })();
       `);
-      return result || { ok: true };
+      if (!sendResult || !sendResult.ok) {
+        view.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Enter' });
+        view.webContents.sendInputEvent({ type: 'char', keyCode: 'Enter' });
+        view.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Enter' });
+      }
+      return { ok: true, message: 'Đã gửi lệnh chèn/gửi vào tab Zalo.' };
     } catch (err) { return { ok: false, message: err.message || String(err) }; }
   });
   ipcMain.handle('zalo-switch-and-send', async (event, chatName, message, options = {}) => {
@@ -787,7 +795,7 @@ function createWindow() {
         }
       }
 
-      const sendResult = await view.webContents.executeJavaScript(`
+      const focusResult = await view.webContents.executeJavaScript(`
         (function() {
           function isVisible(el) {
             if (!el) return false;
@@ -815,18 +823,25 @@ function createWindow() {
             }
             return null;
           }
-          function setText(el, text) {
-            el.focus();
-            if (el.value !== undefined) {
-              el.value = text;
-              el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
-              el.dispatchEvent(new Event('change', { bubbles: true }));
-              return;
-            }
-            document.execCommand('selectAll', false, null);
-            document.execCommand('insertText', false, text);
-            el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
+          var input = findInput();
+          if (!input) return { ok: false, message: 'Không tìm thấy ô nhập chat Zalo sau khi chuyển.' };
+          input.focus();
+          document.execCommand('selectAll', false, null);
+          return { ok: true };
+        })();
+      `);
+      if (!focusResult || !focusResult.ok) return focusResult;
+
+      view.webContents.insertText(String(message));
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const sendResult = await view.webContents.executeJavaScript(`
+        (function() {
+          function isVisible(el) {
+            if (!el) return false;
+            var rect = el.getBoundingClientRect && el.getBoundingClientRect();
+            var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+            return !!rect && rect.width > 0 && rect.height > 0 && (!style || (style.visibility !== 'hidden' && style.display !== 'none'));
           }
           function findSendButton() {
             var selectors = ['[data-translate-title="STR_SEND"]', 'button[class*="send"]', '.chat-input__send-btn', '[aria-label="Gửi"]', '[aria-label="Send"]'];
@@ -836,16 +851,17 @@ function createWindow() {
             }
             return null;
           }
-          var input = findInput();
-          if (!input) return { ok: false, message: 'Không tìm thấy ô nhập chat Zalo sau khi chuyển.' };
-          setText(input, ${safeMessage});
-          var sendBtn = findSendButton();
-          if (sendBtn) sendBtn.click();
-          else input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
-          return { ok: true, message: 'Đã gửi lệnh chèn/gửi vào Zalo.' };
+          var btn = findSendButton();
+          if (btn) { btn.click(); return { ok: true }; }
+          return { ok: false };
         })();
       `);
-      return sendResult || { ok: true };
+      if (!sendResult || !sendResult.ok) {
+        view.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Enter' });
+        view.webContents.sendInputEvent({ type: 'char', keyCode: 'Enter' });
+        view.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Enter' });
+      }
+      return { ok: true, message: 'Đã gửi lệnh chèn/gửi vào Zalo.' };
     } catch (err) { return { ok: false, message: err.message || String(err) }; }
   });
   ipcMain.on('renderer-ready', () => sendToRenderer('lock-state', { locked: settings.lockOnStartup || appLocked, hasPassword: !!settings.lockPasswordHash, zadarkShield: settings.zadarkShield }));
