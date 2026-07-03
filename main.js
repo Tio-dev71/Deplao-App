@@ -738,12 +738,71 @@ function createWindow() {
             if (!fuzzyMatch && itemName && (itemText.includes(wantedName) || wantedName.includes(itemName))) fuzzyMatch = item;
           }
           var targetEl = exactMatch || fuzzyMatch;
-          if (!targetEl) return { ok: false, message: 'Không tìm thấy cuộc hội thoại: ' + wantedName };
-          clickElement(targetEl);
-          return { ok: true, wait: true, matched: getVisibleText(targetEl) };
+          if (targetEl) {
+            clickElement(targetEl);
+            return { found: true, matched: getVisibleText(targetEl) };
+          }
+          return { found: false };
         })();
       `);
-      if (!result || !result.ok) return result || { ok: false, message: 'Failed to switch chat.' };
+
+      if (!result || (!result.found && result.ok === false)) {
+        return result || { ok: false, message: 'Failed to switch chat.' };
+      }
+
+      if (result && !result.found) {
+        // Fallback to Search
+        const searchBoxReady = await view.webContents.executeJavaScript(`
+          (function() {
+            var searchInput = document.getElementById('contact-search-input') || document.querySelector('input[placeholder*="Tìm kiếm"]');
+            if (searchInput) {
+              searchInput.focus();
+              document.execCommand('selectAll', false, null);
+              return true;
+            }
+            return false;
+          })();
+        `);
+        if (!searchBoxReady) return { ok: false, message: 'Không tìm thấy cuộc hội thoại và không mở được ô tìm kiếm: ' + String(chatName) };
+
+        view.webContents.insertText(String(chatName));
+        
+        let searchClick = false;
+        for (let s = 0; s < 3; s++) {
+          await new Promise(r => setTimeout(r, 1000));
+          searchClick = await view.webContents.executeJavaScript(`
+            (function() {
+              function normalizeText(value) {
+                return String(value || '').normalize('NFC').replace(/[\\u200B-\\u200D\\uFEFF]/g, '').replace(/\\s+/g, ' ').trim();
+              }
+              var wantedName = normalizeText(${safeName});
+              var items = Array.from(document.querySelectorAll('.global-search-result .msg-item, #contact-search-result .msg-item, .ReactVirtualized__Grid .msg-item, [id*="search"] .msg-item'));
+              if (!items.length) items = Array.from(document.querySelectorAll('.msg-item'));
+              var exactMatch = null, fuzzyMatch = null;
+              for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var nameEl = item.querySelector('.conv-item-title__name, .item-title__name, .item-title, .truncate');
+                var itemName = normalizeText((nameEl && (nameEl.innerText || nameEl.textContent)) || '');
+                if (itemName === wantedName) exactMatch = item;
+                if (!fuzzyMatch && itemName && itemName.includes(wantedName)) fuzzyMatch = item;
+              }
+              var target = exactMatch || fuzzyMatch;
+              if (target) {
+                var clickTarget = target.querySelector('.conv-item-title__name, .item-title__name, .truncate') || target;
+                if (target.scrollIntoView) target.scrollIntoView({ block: 'center' });
+                clickTarget.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                clickTarget.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+                clickTarget.click();
+                target.click();
+                return true;
+              }
+              return false;
+            })();
+          `);
+          if (searchClick) break;
+        }
+        if (!searchClick) return { ok: false, message: 'Không tìm thấy kết quả tìm kiếm cho: ' + String(chatName) };
+      }
 
       for (let attempt = 0; attempt < 12; attempt += 1) {
         await new Promise(resolve => setTimeout(resolve, attempt < 3 ? 500 : 800));
