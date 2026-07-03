@@ -390,7 +390,7 @@ function renderCampaigns() {
       <div class="campaign-item" data-campaign="${campaign.id}">
         <div class="row"><div><div class="title-sm">${escapeHtml(campaign.name)}</div><div class="muted">${sent}/${total} sent • ${failed} fail</div></div><span class="pill ${escapeHtml(campaign.status || 'draft')}">${escapeHtml(campaign.status || 'draft')}</span></div>
         <div class="muted mt-12">${escapeHtml(campaign.message || '')}</div>
-        <div class="row mt-12"><button class="modal-btn cancel" data-action="select">Chọn</button><button class="modal-btn cancel" data-action="pause">Pause</button><button class="modal-btn cancel" data-action="stop">Stop</button></div>
+        <div class="row mt-12"><button class="modal-btn cancel" data-action="select">Chọn</button><button class="modal-btn cancel" data-action="pause">Pause</button><button class="modal-btn cancel" data-action="stop">Stop</button><button class="modal-btn warn" data-action="delete">Xóa</button></div>
       </div>`;
   }).join('');
   list.querySelectorAll('[data-campaign]').forEach((item) => {
@@ -398,7 +398,18 @@ function renderCampaigns() {
     item.querySelector('[data-action="select"]').onclick = () => { selectedCampaignId = id; alert('Đã chọn campaign để chạy.'); };
     item.querySelector('[data-action="pause"]').onclick = () => pauseCampaign(id);
     item.querySelector('[data-action="stop"]').onclick = () => stopCampaign(id);
+    item.querySelector('[data-action="delete"]').onclick = () => deleteCampaign(id);
   });
+}
+function deleteCampaign(campaignId) {
+  if (confirm('Bạn có chắc chắn muốn xóa campaign này?')) {
+    if (campaignTimers[campaignId]) clearTimeout(campaignTimers[campaignId]);
+    workspaceData.campaigns = workspaceData.campaigns.filter((c) => c.id !== campaignId);
+    if (selectedCampaignId === campaignId) selectedCampaignId = null;
+    persistWorkspace();
+    trackEvent('campaign_deleted', { id: campaignId });
+    renderCampaigns();
+  }
 }
 function renderCampaignTargets(source) {
   const list = document.getElementById('campaign-target-list');
