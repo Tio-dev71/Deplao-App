@@ -231,7 +231,7 @@ function runInjection(currentSettings) {
           items.forEach(function(item) {
             var nameEl = item.querySelector('.conv-item-title__name, .item-title__name, .item-title, .truncate');
             if (nameEl) {
-               var name = nameEl.innerText.trim();
+               var name = (nameEl.innerText || '').replace(/\s+/g, ' ').trim();
                if (name && !chats.includes(name)) {
                   chats.push(name);
                }
@@ -251,7 +251,7 @@ function runInjection(currentSettings) {
         try {
           if (isZalo) {
             var chatNameEl = document.querySelector('.header-title') || document.querySelector('.title-name');
-            if (chatNameEl) info.name = chatNameEl.innerText.trim();
+            if (chatNameEl) info.name = (chatNameEl.innerText || '').replace(/\s+/g, ' ').trim();
           } else if (isMessenger) {
             var chatNameEl = document.querySelector('span[dir="auto"]');
             if (document.title && document.title.includes('Messenger')) {
@@ -284,7 +284,7 @@ function runInjection(currentSettings) {
               avatarEl = imgs.find(img => img.src && (img.src.includes('ava') || img.src.includes('zavatar')));
               if (!avatarEl && imgs.length > 0) avatarEl = imgs[0];
             }
-            if (nameEl) info.name = nameEl.innerText.trim();
+            if (nameEl) info.name = (nameEl.innerText || '').replace(/\s+/g, ' ').trim();
             if (avatarEl) info.avatar = avatarEl.src;
           } else if (isMessenger) {
             var titleEl = document.querySelector('title');

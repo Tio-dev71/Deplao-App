@@ -316,6 +316,10 @@
     }
 
     .tool-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       min-height: 86px;
       border: 1px solid rgba(255, 255, 255, .1);
       border-radius: 20px;
@@ -323,7 +327,7 @@
       background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .035));
       color: inherit;
       cursor: pointer;
-      text-align: left;
+      text-align: center;
       font: inherit;
       transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
     }
