@@ -476,6 +476,9 @@ async function runCampaign(campaignId) {
       campaignTimers[campaignId] = setTimeout(() => runCampaign(campaignId), 1200);
       return;
     }
+    const alreadySent = (latest.logs || []).find(l => l.targetId === target.id && l.status === 'sent');
+    if (alreadySent) continue;
+    
     await wait(randomBetween(latest.delayMin, latest.delayMax));
     try {
       const result = latest.mode === 'auto'

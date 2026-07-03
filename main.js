@@ -623,10 +623,10 @@ function createWindow() {
       const result = await view.webContents.executeJavaScript(`
         (function() {
           function findInput() {
-            return document.querySelector('[contenteditable="true"][role="textbox"]') ||
-              document.querySelector('[contenteditable="true"]') ||
-              document.querySelector('textarea') ||
-              document.querySelector('input[type="text"]');
+            return document.getElementById('richInput') || 
+                   document.querySelector('#chatInput') || 
+                   document.querySelector('.chat-input [contenteditable="true"]') ||
+                   document.querySelector('[id*="input_line_"]');
           }
           function dispatchInput(el) {
             el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: ${safeMessage} }));
@@ -692,10 +692,10 @@ function createWindow() {
       const sendResult = await view.webContents.executeJavaScript(`
         (function() {
           function findInput() {
-            return document.querySelector('[contenteditable="true"][role="textbox"]') ||
-              document.querySelector('[contenteditable="true"]') ||
-              document.querySelector('textarea') ||
-              document.querySelector('input[type="text"]');
+            return document.getElementById('richInput') || 
+                   document.querySelector('#chatInput') || 
+                   document.querySelector('.chat-input [contenteditable="true"]') ||
+                   document.querySelector('[id*="input_line_"]');
           }
           function dispatchInput(el) {
             el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: ${safeMessage} }));
