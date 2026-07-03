@@ -806,11 +806,7 @@ function createWindow() {
         const ready = await view.webContents.executeJavaScript(`
           (function() {
             function normalizeText(value) {
-              return String(value || '')
-                .normalize('NFC')
-                .replace(/[\u200B-\u200D\uFEFF]/g, '')
-                .replace(/\\s+/g, ' ')
-                .trim();
+              return String(value || '').normalize('NFC').replace(/[\\u200B-\\u200D\\uFEFF]/g, '').replace(/\\s+/g, ' ').trim();
             }
             function isVisible(el) {
               if (!el) return false;
@@ -830,27 +826,59 @@ function createWindow() {
                 'textarea'
               ];
               for (var i = 0; i < selectors.length; i++) {
-                var found = Array.from(document.querySelectorAll(selectors[i])).find(isVisible);
+                var found = Array.from(document.querySelectorAll(selectors[i])).find(function(el) {
+                  var rect = el.getBoundingClientRect && el.getBoundingClientRect();
+                  return isVisible(el) && rect && rect.left > 280;
+                });
                 if (found) return found;
               }
               return null;
             }
-            var headerSelectors = ['.header-title', '.title-name', '.conv-title', '[class*="header"] [class*="title"]', '[class*="title"]'];
-            var headerEl = null;
-            for (var i = 0; i < headerSelectors.length; i++) {
-              headerEl = Array.from(document.querySelectorAll(headerSelectors[i])).find(function(el) {
-                var rect = el.getBoundingClientRect && el.getBoundingClientRect();
-                return isVisible(el) && rect && rect.left > 60 && rect.top < 150;
-              });
-              if (headerEl) break;
-            }
-            var headerText = normalizeText((headerEl && (headerEl.innerText || headerEl.textContent)) || '');
+            
             var wantedName = normalizeText(${safeName});
+            function isMatch(txt) {
+              if (!txt || !wantedName) return false;
+              return txt === wantedName || txt.includes(wantedName) || (wantedName.includes(txt) && txt.length > 3);
+            }
+
+            var headerEl = null;
+            var headerText = '';
+
+            // 1. Direct text match in top-right area
+            var leafs = Array.from(document.querySelectorAll('div, span, p, h1, h2, h3, h4, b, strong')).filter(el => el.children.length === 0);
+            for (var i = 0; i < leafs.length; i++) {
+              var el = leafs[i];
+              var txt = normalizeText(el.innerText || el.textContent);
+              if (txt && isMatch(txt) && isVisible(el)) {
+                 var rect = el.getBoundingClientRect();
+                 if (rect.left > 280 && rect.top < 160) {
+                    headerEl = el;
+                    headerText = txt;
+                    break;
+                 }
+              }
+            }
+
+            // 2. Fallback to generic header selectors
+            if (!headerEl) {
+              var headerSelectors = ['header [class*="title"]', 'header [class*="name"]', '.header-title', '.title-name', '.conv-title', '#chatView header span', '[data-id="div_Main_Header"] [class*="title"]'];
+              for (var i = 0; i < headerSelectors.length; i++) {
+                headerEl = Array.from(document.querySelectorAll(headerSelectors[i])).find(function(el) {
+                  var rect = el.getBoundingClientRect && el.getBoundingClientRect();
+                  return isVisible(el) && rect && rect.left > 280 && rect.top < 160;
+                });
+                if (headerEl) {
+                  headerText = normalizeText(headerEl.innerText || headerEl.textContent);
+                  break;
+                }
+              }
+            }
+            
             var input = findInput();
             return { 
               ok: !!input, 
               headerText: headerText, 
-              matched: !wantedName || !headerText ? false : (headerText === wantedName || headerText.includes(wantedName) || wantedName.includes(headerText)),
+              matched: isMatch(headerText),
               debugHeader: headerText,
               debugWanted: wantedName
             };
