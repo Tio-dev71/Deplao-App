@@ -640,10 +640,7 @@ function createWindow() {
               'textarea'
             ];
             for (var i = 0; i < selectors.length; i++) {
-              var found = Array.from(document.querySelectorAll(selectors[i])).find(function(el) {
-                var rect = el.getBoundingClientRect && el.getBoundingClientRect();
-                return isVisible(el) && rect && rect.top > 120 && rect.left > 220;
-              });
+              var found = Array.from(document.querySelectorAll(selectors[i])).find(isVisible);
               if (found) return found;
             }
             return null;
@@ -833,23 +830,35 @@ function createWindow() {
                 'textarea'
               ];
               for (var i = 0; i < selectors.length; i++) {
-                var found = Array.from(document.querySelectorAll(selectors[i])).find(function(el) {
-                  var rect = el.getBoundingClientRect && el.getBoundingClientRect();
-                  return isVisible(el) && rect && rect.top > 120 && rect.left > 220;
-                });
+                var found = Array.from(document.querySelectorAll(selectors[i])).find(isVisible);
                 if (found) return found;
               }
               return null;
             }
-            var headerEl = document.querySelector('.header-title, .title-name, .conv-title, [class*="header"] [class*="title"]');
+            var headerSelectors = ['.header-title', '.title-name', '.conv-title', '[class*="header"] [class*="title"]', '[class*="title"]'];
+            var headerEl = null;
+            for (var i = 0; i < headerSelectors.length; i++) {
+              headerEl = Array.from(document.querySelectorAll(headerSelectors[i])).find(function(el) {
+                var rect = el.getBoundingClientRect && el.getBoundingClientRect();
+                return isVisible(el) && rect && rect.left > 60 && rect.top < 150;
+              });
+              if (headerEl) break;
+            }
             var headerText = normalizeText((headerEl && (headerEl.innerText || headerEl.textContent)) || '');
             var wantedName = normalizeText(${safeName});
             var input = findInput();
-            return { ok: !!input, headerText: headerText, matched: !wantedName || !headerText ? false : (headerText === wantedName || headerText.includes(wantedName) || wantedName.includes(headerText)) };
+            return { 
+              ok: !!input, 
+              headerText: headerText, 
+              matched: !wantedName || !headerText ? false : (headerText === wantedName || headerText.includes(wantedName) || wantedName.includes(headerText)),
+              debugHeader: headerText,
+              debugWanted: wantedName
+            };
           })();
         `);
         if (ready && ready.ok && ready.matched) break;
         if (attempt === 11) {
+          console.log('Zalo Campaign send failed. Target: ' + String(chatName) + ', Ready payload:', ready);
           return { ok: false, message: `Đã click hội thoại nhưng chưa mở được ô chat cho: ${String(chatName).trim()}` };
         }
       }
@@ -874,10 +883,7 @@ function createWindow() {
               'textarea'
             ];
             for (var i = 0; i < selectors.length; i++) {
-              var found = Array.from(document.querySelectorAll(selectors[i])).find(function(el) {
-                var rect = el.getBoundingClientRect && el.getBoundingClientRect();
-                return isVisible(el) && rect && rect.top > 120 && rect.left > 220;
-              });
+              var found = Array.from(document.querySelectorAll(selectors[i])).find(isVisible);
               if (found) return found;
             }
             return null;
