@@ -232,7 +232,8 @@ function runInjection(currentSettings) {
             var nameEl = item.querySelector('.conv-item-title__name, .item-title__name, .item-title, .truncate');
             if (nameEl) {
                var name = (nameEl.innerText || '').replace(/\s+/g, ' ').trim();
-               if (name && !chats.includes(name)) {
+               var exclude = ['Tin nhắn', 'Danh bạ', 'Zalo Cloud', 'Công cụ', 'Giao việc', 'Lịch sử đồng bộ'];
+               if (name && !chats.includes(name) && !exclude.includes(name)) {
                   chats.push(name);
                }
             }
