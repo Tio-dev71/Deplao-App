@@ -622,28 +622,57 @@ function createWindow() {
       const safeMessage = JSON.stringify(String(message));
       const result = await view.webContents.executeJavaScript(`
         (function() {
-          function findInput() {
-            return document.getElementById('richInput') || 
-                   document.querySelector('#chatInput') || 
-                   document.querySelector('.chat-input [contenteditable="true"]') ||
-                   document.querySelector('[id*="input_line_"]');
+          function isVisible(el) {
+            if (!el) return false;
+            var rect = el.getBoundingClientRect && el.getBoundingClientRect();
+            var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+            return !!rect && rect.width > 0 && rect.height > 0 && (!style || (style.visibility !== 'hidden' && style.display !== 'none'));
           }
-          function dispatchInput(el) {
-            el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: ${safeMessage} }));
+          function findInput() {
+            var selectors = [
+              '#richInput',
+              '#chatInput',
+              '[id*="input_line_"]',
+              '.chat-input [contenteditable="true"]',
+              '[contenteditable="true"][role="textbox"]',
+              '[contenteditable="true"]',
+              '[role="textbox"]',
+              'textarea'
+            ];
+            for (var i = 0; i < selectors.length; i++) {
+              var found = Array.from(document.querySelectorAll(selectors[i])).find(function(el) {
+                var rect = el.getBoundingClientRect && el.getBoundingClientRect();
+                return isVisible(el) && rect && rect.top > 120 && rect.left > 220;
+              });
+              if (found) return found;
+            }
+            return null;
+          }
+          function setText(el, text) {
+            el.focus();
+            if (el.value !== undefined) {
+              el.value = text;
+              el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+              return;
+            }
+            document.execCommand('selectAll', false, null);
+            document.execCommand('insertText', false, text);
+            el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
             el.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          function findSendButton() {
+            var selectors = ['[data-translate-title="STR_SEND"]', 'button[class*="send"]', '.chat-input__send-btn', '[aria-label="Gửi"]', '[aria-label="Send"]'];
+            for (var i = 0; i < selectors.length; i++) {
+              var btn = Array.from(document.querySelectorAll(selectors[i])).find(isVisible);
+              if (btn) return btn;
+            }
+            return null;
           }
           var input = findInput();
           if (!input) return { ok: false, message: 'Không tìm thấy ô nhập chat Zalo.' };
-          input.focus();
-          document.execCommand('selectAll', false, null);
-          document.execCommand('insertText', false, ${safeMessage});
-          if (input.value !== undefined) input.value = ${safeMessage};
-          dispatchInput(input);
-          var sendBtn = document.querySelector('[data-translate-title="STR_SEND"]') ||
-            document.querySelector('button[class*="send"]') ||
-            document.querySelector('.chat-input__send-btn') ||
-            document.querySelector('[aria-label="Gửi"]') ||
-            document.querySelector('[aria-label="Send"]');
+          setText(input, ${safeMessage});
+          var sendBtn = findSendButton();
           if (sendBtn) sendBtn.click();
           else input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
           return { ok: true, message: 'Đã gửi lệnh chèn/gửi vào tab Zalo.' };
@@ -713,11 +742,31 @@ function createWindow() {
                 .replace(/\\s+/g, ' ')
                 .trim();
             }
+            function isVisible(el) {
+              if (!el) return false;
+              var rect = el.getBoundingClientRect && el.getBoundingClientRect();
+              var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+              return !!rect && rect.width > 0 && rect.height > 0 && (!style || (style.visibility !== 'hidden' && style.display !== 'none'));
+            }
             function findInput() {
-              return document.getElementById('richInput') ||
-                     document.querySelector('#chatInput') ||
-                     document.querySelector('.chat-input [contenteditable="true"]') ||
-                     document.querySelector('[id*="input_line_"]');
+              var selectors = [
+                '#richInput',
+                '#chatInput',
+                '[id*="input_line_"]',
+                '.chat-input [contenteditable="true"]',
+                '[contenteditable="true"][role="textbox"]',
+                '[contenteditable="true"]',
+                '[role="textbox"]',
+                'textarea'
+              ];
+              for (var i = 0; i < selectors.length; i++) {
+                var found = Array.from(document.querySelectorAll(selectors[i])).find(function(el) {
+                  var rect = el.getBoundingClientRect && el.getBoundingClientRect();
+                  return isVisible(el) && rect && rect.top > 120 && rect.left > 220;
+                });
+                if (found) return found;
+              }
+              return null;
             }
             var headerEl = document.querySelector('.header-title, .title-name, .conv-title, [class*="header"] [class*="title"]');
             var headerText = normalizeText((headerEl && (headerEl.innerText || headerEl.textContent)) || '');
@@ -734,28 +783,57 @@ function createWindow() {
 
       const sendResult = await view.webContents.executeJavaScript(`
         (function() {
-          function findInput() {
-            return document.getElementById('richInput') || 
-                   document.querySelector('#chatInput') || 
-                   document.querySelector('.chat-input [contenteditable="true"]') ||
-                   document.querySelector('[id*="input_line_"]');
+          function isVisible(el) {
+            if (!el) return false;
+            var rect = el.getBoundingClientRect && el.getBoundingClientRect();
+            var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+            return !!rect && rect.width > 0 && rect.height > 0 && (!style || (style.visibility !== 'hidden' && style.display !== 'none'));
           }
-          function dispatchInput(el) {
-            el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: ${safeMessage} }));
+          function findInput() {
+            var selectors = [
+              '#richInput',
+              '#chatInput',
+              '[id*="input_line_"]',
+              '.chat-input [contenteditable="true"]',
+              '[contenteditable="true"][role="textbox"]',
+              '[contenteditable="true"]',
+              '[role="textbox"]',
+              'textarea'
+            ];
+            for (var i = 0; i < selectors.length; i++) {
+              var found = Array.from(document.querySelectorAll(selectors[i])).find(function(el) {
+                var rect = el.getBoundingClientRect && el.getBoundingClientRect();
+                return isVisible(el) && rect && rect.top > 120 && rect.left > 220;
+              });
+              if (found) return found;
+            }
+            return null;
+          }
+          function setText(el, text) {
+            el.focus();
+            if (el.value !== undefined) {
+              el.value = text;
+              el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+              return;
+            }
+            document.execCommand('selectAll', false, null);
+            document.execCommand('insertText', false, text);
+            el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
             el.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          function findSendButton() {
+            var selectors = ['[data-translate-title="STR_SEND"]', 'button[class*="send"]', '.chat-input__send-btn', '[aria-label="Gửi"]', '[aria-label="Send"]'];
+            for (var i = 0; i < selectors.length; i++) {
+              var btn = Array.from(document.querySelectorAll(selectors[i])).find(isVisible);
+              if (btn) return btn;
+            }
+            return null;
           }
           var input = findInput();
           if (!input) return { ok: false, message: 'Không tìm thấy ô nhập chat Zalo sau khi chuyển.' };
-          input.focus();
-          document.execCommand('selectAll', false, null);
-          document.execCommand('insertText', false, ${safeMessage});
-          if (input.value !== undefined) input.value = ${safeMessage};
-          dispatchInput(input);
-          var sendBtn = document.querySelector('[data-translate-title="STR_SEND"]') ||
-            document.querySelector('button[class*="send"]') ||
-            document.querySelector('.chat-input__send-btn') ||
-            document.querySelector('[aria-label="Gửi"]') ||
-            document.querySelector('[aria-label="Send"]');
+          setText(input, ${safeMessage});
+          var sendBtn = findSendButton();
           if (sendBtn) sendBtn.click();
           else input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
           return { ok: true, message: 'Đã gửi lệnh chèn/gửi vào Zalo.' };
