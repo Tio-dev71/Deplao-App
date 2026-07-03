@@ -786,6 +786,7 @@ function showLockOverlay(setupMode = false) {
   appLocked = true;
   openOverlay('lock-overlay');
   document.getElementById('lock-password-confirm').style.display = setupMode ? 'block' : 'none';
+  document.getElementById('lock-remove').style.display = (!setupMode && hasLockPassword) ? 'block' : 'none';
   document.getElementById('lock-hint').innerText = setupMode ? 'Tạo mật khẩu khóa ứng dụng.' : 'Nhập mật khẩu để mở khóa.';
   document.getElementById('lock-submit').innerText = setupMode ? 'Tạo khóa' : 'Mở khóa';
   document.getElementById('lock-password').value = '';
@@ -802,6 +803,11 @@ document.getElementById('lock-submit').onclick = () => {
     if (!password || password !== confirmPassword) return alert('Mật khẩu không khớp.');
     ipcRenderer.send('set-lock-password', password);
   } else ipcRenderer.send('unlock-app', password);
+};
+document.getElementById('lock-remove').onclick = () => {
+  const password = document.getElementById('lock-password').value;
+  if (!password) return alert('Vui lòng nhập mật khẩu hiện tại để gỡ khóa.');
+  ipcRenderer.send('remove-lock-password', password);
 };
 document.getElementById('lock-password').addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('lock-submit').click(); });
 document.getElementById('lock-password-confirm').addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('lock-submit').click(); });
@@ -826,7 +832,13 @@ ipcRenderer.on('lock-state', (_, state) => {
   document.getElementById('btn-shield').classList.toggle('active', !!state.zadarkShield);
   if (state.locked) showLockOverlay(!hasLockPassword);
 });
-ipcRenderer.on('unlock-result', (_, result) => { if (result.ok) { hasLockPassword = true; hideLockOverlay(); } else alert(result.message || 'Sai mật khẩu.'); });
+ipcRenderer.on('unlock-result', (_, result) => { 
+  if (result.ok) { 
+    if (result.removed) { hasLockPassword = false; alert('Đã gỡ mật khẩu khóa ứng dụng thành công!'); }
+    else hasLockPassword = true; 
+    hideLockOverlay(); 
+  } else alert(result.message || 'Sai mật khẩu.'); 
+});
 ipcRenderer.on('update-profile-badge', (_, { id, count }) => {
   const badge = document.getElementById(`badge-${id}`);
   if (badge) {

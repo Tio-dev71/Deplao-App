@@ -734,10 +734,22 @@ function createWindow() {
   ipcMain.on('lock-app', lockApp);
   ipcMain.on('set-lock-password', (event, password) => { const result = hashPassword(password); settings.lockSalt = result.salt; settings.lockPasswordHash = result.hash; settings.lockOnStartup = true; saveSettings(settings); unlockApp(true); updateTrayMenu(); });
   ipcMain.on('unlock-app', (event, password) => unlockApp(verifyPassword(password)));
+  ipcMain.on('remove-lock-password', (event, password) => {
+    if (verifyPassword(password)) {
+      settings.lockSalt = null;
+      settings.lockPasswordHash = null;
+      settings.lockOnStartup = false;
+      saveSettings(settings);
+      unlockApp(true, true);
+      updateTrayMenu();
+    } else {
+      sendToRenderer('unlock-result', { ok: false, message: 'Sai mật khẩu hiện tại.' });
+    }
+  });
 }
 
 function lockApp() { appLocked = true; if (mainWindow) mainWindow.setBrowserView(null); sendToRenderer('lock-state', { locked: true, hasPassword: !!settings.lockPasswordHash, zadarkShield: settings.zadarkShield }); }
-function unlockApp(ok) { if (ok) { appLocked = false; sendToRenderer('unlock-result', { ok: true }); if (mainWindow && activeProfileId && browserViews[activeProfileId]) { mainWindow.setBrowserView(browserViews[activeProfileId]); updateBrowserViewBounds(); } } else sendToRenderer('unlock-result', { ok: false, message: 'Sai mật khẩu.' }); }
+function unlockApp(ok, removed = false) { if (ok) { appLocked = false; sendToRenderer('unlock-result', { ok: true, removed }); if (mainWindow && activeProfileId && browserViews[activeProfileId]) { mainWindow.setBrowserView(browserViews[activeProfileId]); updateBrowserViewBounds(); } } else sendToRenderer('unlock-result', { ok: false, message: 'Sai mật khẩu.' }); }
 
 function updateBadge(count) {
   if (!mainWindow) return;
