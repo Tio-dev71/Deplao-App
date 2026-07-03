@@ -47,6 +47,11 @@ let editingContactId = null;
 let selectedCampaignId = null;
 let currentChatSnapshot = null;
 let campaignTimers = {};
+let currentCampaignTargetSource = 'recent';
+const campaignTargetSelections = {
+  crm: new Set(),
+  recent: new Set(),
+};
 
 function normalizeWorkspaceData(data = {}) {
   return {
@@ -423,18 +428,42 @@ function deleteCampaign(campaignId) {
     renderCampaigns();
   }
 }
-function renderCampaignTargets(source) {
+function renderCampaignTargets(source = currentCampaignTargetSource) {
   const list = document.getElementById('campaign-target-list');
   const activeProfile = getActiveProfile();
-  if (!activeProfile) return;
+  if (!activeProfile || !list) return;
+  currentCampaignTargetSource = source;
+
+  const selectedSet = campaignTargetSelections[source] || new Set();
+  let targets = [];
   if (source === 'crm') {
-      const targets = workspaceData.crmContacts.filter((c) => c.profileId === activeProfile.id);
-      list.innerHTML = targets.length ? targets.map((t) => `<label style="display:flex; align-items:center; gap:10px; padding:6px; cursor:pointer;"><input type="checkbox" name="camp_target" value="${escapeHtml(t.name)}" checked> <span style="font-size:13px;">${escapeHtml(t.name)} (${escapeHtml(t.phone)})</span></label>`).join('') : '<div class="muted">Chưa có CRM contact cho profile này.</div>';
+    targets = workspaceData.crmContacts
+      .filter((c) => c.profileId === activeProfile.id)
+      .map((contact) => ({ value: contact.name, label: `${contact.name} (${contact.phone})` }));
   } else if (source === 'recent') {
-      const targets = sanitizeRecentChats(workspaceData.recentChats);
-      workspaceData.recentChats = targets;
-      list.innerHTML = targets.length ? targets.map((name) => `<label style="display:flex; align-items:center; gap:10px; padding:6px; cursor:pointer;"><input type="checkbox" name="camp_target" value="${escapeHtml(name)}" checked> <span style="font-size:13px;">${escapeHtml(name)}</span></label>`).join('') : '<div class="muted">Chưa tải được hội thoại gần đây. Hãy vào tab Zalo để extension quét.</div>';
+    const recentTargets = sanitizeRecentChats(workspaceData.recentChats);
+    workspaceData.recentChats = recentTargets;
+    targets = recentTargets.map((name) => ({ value: name, label: name }));
   }
+
+  if (!targets.length) {
+    list.innerHTML = source === 'crm'
+      ? '<div class="muted">Chưa có CRM contact cho profile này.</div>'
+      : '<div class="muted">Chưa tải được hội thoại gần đây. Hãy vào tab Zalo để extension quét.</div>';
+    return;
+  }
+
+  list.innerHTML = targets.map((target) => {
+    const checked = selectedSet.has(target.value) ? 'checked' : '';
+    return `<label style="display:flex; align-items:center; gap:10px; padding:6px; cursor:pointer;"><input type="checkbox" name="camp_target" value="${escapeHtml(target.value)}" ${checked}> <span style="font-size:13px;">${escapeHtml(target.label)}</span></label>`;
+  }).join('');
+
+  list.querySelectorAll('input[name="camp_target"]').forEach((input) => {
+    input.addEventListener('change', () => {
+      if (input.checked) selectedSet.add(input.value);
+      else selectedSet.delete(input.value);
+    });
+  });
 }
 
 function createCampaign() {
@@ -1000,8 +1029,7 @@ ipcRenderer.send('get-downloads');
 ipcRenderer.on('recent-chats', (event, info) => {
   if (info.profileId === activeProfileId) {
     workspaceData.recentChats = sanitizeRecentChats(info.chats);
-    const list = document.getElementById('campaign-target-list');
-    if (list && list.querySelector('input[name="camp_target"]')) {
+    if (currentCampaignTargetSource === 'recent') {
       renderCampaignTargets('recent');
     }
   }
