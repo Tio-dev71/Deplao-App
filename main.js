@@ -704,8 +704,14 @@ function createWindow() {
             try {
               if (!el) return false;
               if (el.scrollIntoView) el.scrollIntoView({ block: 'center' });
-              el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
-              el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+              var clickTarget = el.querySelector('.conv-item-title__name, .item-title__name, .truncate') || el;
+              var mousedown = new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window });
+              var mouseup = new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window });
+              var click = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+              clickTarget.dispatchEvent(mousedown);
+              clickTarget.dispatchEvent(mouseup);
+              clickTarget.dispatchEvent(click);
+              clickTarget.click();
               el.click();
               return true;
             } catch (e) { return false; }
@@ -775,7 +781,7 @@ function createWindow() {
             return { ok: !!input, headerText: headerText, matched: !wantedName || !headerText ? false : (headerText === wantedName || headerText.includes(wantedName) || wantedName.includes(headerText)) };
           })();
         `);
-        if (ready && ready.ok && (ready.matched || attempt >= 4)) break;
+        if (ready && ready.ok && ready.matched) break;
         if (attempt === 11) {
           return { ok: false, message: `Đã click hội thoại nhưng chưa mở được ô chat cho: ${String(chatName).trim()}` };
         }
