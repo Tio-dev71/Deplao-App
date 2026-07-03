@@ -631,12 +631,8 @@ function createWindow() {
           function findInput() {
             var selectors = [
               '#richInput',
-              '#chatInput',
-              '[id*="input_line_"]',
-              '#chatView [contenteditable="true"]',
               '.chat-input [contenteditable="true"]',
-              '[contenteditable="true"][placeholder*="Nhập"]',
-              '[contenteditable="true"][placeholder*="nhắn"]'
+              '[contenteditable="true"]'
             ];
             for (var i = 0; i < selectors.length; i++) {
               var found = document.querySelector(selectors[i]);
@@ -811,12 +807,8 @@ function createWindow() {
             function findInput() {
               var selectors = [
                 '#richInput',
-                '#chatInput',
-                '[id*="input_line_"]',
-                '#chatView [contenteditable="true"]',
                 '.chat-input [contenteditable="true"]',
-                '[contenteditable="true"][placeholder*="Nhập"]',
-                '[contenteditable="true"][placeholder*="nhắn"]'
+                '[contenteditable="true"]'
               ];
               for (var i = 0; i < selectors.length; i++) {
                 var found = document.querySelector(selectors[i]);
@@ -831,35 +823,42 @@ function createWindow() {
               return txt === wantedName || txt.includes(wantedName) || (wantedName.includes(txt) && txt.length > 3);
             }
 
-            var headerEl = null;
             var headerText = '';
-
-            var headerSelectors = [
-              '#chatView header [class*="title"]', 
-              '#chatView header [class*="name"]', 
-              '#chatView .header-title', 
-              '#chatView .title-name', 
-              '#chatView .conv-title', 
-              '#chatView header span', 
-              '[data-id="div_Main_Header"] [class*="title"]',
-              '#chatView [class*="title"]',
-              '#chatView [class*="name"]'
-            ];
+            var input = findInput();
             
-            for (var i = 0; i < headerSelectors.length; i++) {
-              headerEl = document.querySelector(headerSelectors[i]);
-              if (headerEl) {
-                headerText = normalizeText(headerEl.innerText || headerEl.textContent);
-                if (isMatch(headerText)) break;
+            if (input) {
+              // Walk up the DOM to find the main chat container
+              var container = input;
+              for(var k = 0; k < 15 && container.parentElement; k++) {
+                 container = container.parentElement;
+                 if (container.tagName === 'MAIN' || container.id === 'chatView') break;
+              }
+              
+              // Extract the first 10 text elements in the container (header is always at the top)
+              var leafs = Array.from(container.querySelectorAll('div, span, h1, h2, h3, h4, b, strong')).filter(el => el.children.length === 0);
+              var validTexts = [];
+              for (var i = 0; i < leafs.length; i++) {
+                var txt = normalizeText(leafs[i].innerText || leafs[i].textContent);
+                if (txt && txt.length > 1) {
+                  validTexts.push(txt);
+                  if (validTexts.length > 10) break;
+                }
+              }
+              
+              // Check if any of the top texts match our target name
+              for (var i = 0; i < validTexts.length; i++) {
+                if (isMatch(validTexts[i])) {
+                  headerText = validTexts[i];
+                  break;
+                }
               }
             }
-            
-            var input = findInput();
+
             return { 
               ok: !!input, 
               headerText: headerText, 
               matched: isMatch(headerText),
-              debugHeader: headerText,
+              debugHeader: headerText || (input ? 'Found input but no match in top 10 texts' : ''),
               debugWanted: wantedName
             };
           })();
