@@ -57,6 +57,7 @@ function normalizeWorkspaceData(data = {}) {
     crmContacts: Array.isArray(data.crmContacts) ? data.crmContacts : [],
     campaigns: Array.isArray(data.campaigns) ? data.campaigns : [],
     analyticsEvents: Array.isArray(data.analyticsEvents) ? data.analyticsEvents : [],
+    recentChats: sanitizeRecentChats(data.recentChats),
     aiSettings: { ...defaultState.aiSettings, ...(data.aiSettings || {}) },
   };
 }
@@ -103,6 +104,17 @@ function getActiveProfile() { return profiles.find((p) => p.id === activeProfile
 function getZaloProfiles() { return profiles.filter((profile) => (profile.platform || 'zalo') === 'zalo'); }
 function getCurrentWorkspaceName() { return workspaceState.workspaces.find((w) => w.id === workspaceState.currentId)?.name || 'Workspace'; }
 function statusLabel(status) { return ({ new: 'Mới', hot: 'Khách nóng', follow: 'Đang chăm sóc', bought: 'Đã mua', blacklist: 'Blacklist' }[status] || status || 'Mới'); }
+function sanitizeRecentChats(list = []) {
+  const blocked = ['tin nhắn', 'danh bạ', 'zalo cloud', 'công cụ', 'giao việc', 'lịch sử đồng bộ', 'cài đặt'];
+  return (Array.isArray(list) ? list : [])
+    .map((name) => String(name || '').normalize('NFC').replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ').trim())
+    .filter((name, index, arr) => {
+      if (!name) return false;
+      const lower = name.toLowerCase();
+      if (blocked.some((keyword) => lower === keyword || lower.includes(keyword))) return false;
+      return arr.indexOf(name) === index;
+    });
+}
 function randomBetween(min, max) {
   const low = Number(min) || 1000;
   const high = Number(max) || low;
@@ -419,7 +431,8 @@ function renderCampaignTargets(source) {
       const targets = workspaceData.crmContacts.filter((c) => c.profileId === activeProfile.id);
       list.innerHTML = targets.length ? targets.map((t) => `<label style="display:flex; align-items:center; gap:10px; padding:6px; cursor:pointer;"><input type="checkbox" name="camp_target" value="${escapeHtml(t.name)}" checked> <span style="font-size:13px;">${escapeHtml(t.name)} (${escapeHtml(t.phone)})</span></label>`).join('') : '<div class="muted">Chưa có CRM contact cho profile này.</div>';
   } else if (source === 'recent') {
-      const targets = workspaceData.recentChats || [];
+      const targets = sanitizeRecentChats(workspaceData.recentChats);
+      workspaceData.recentChats = targets;
       list.innerHTML = targets.length ? targets.map((name) => `<label style="display:flex; align-items:center; gap:10px; padding:6px; cursor:pointer;"><input type="checkbox" name="camp_target" value="${escapeHtml(name)}" checked> <span style="font-size:13px;">${escapeHtml(name)}</span></label>`).join('') : '<div class="muted">Chưa tải được hội thoại gần đây. Hãy vào tab Zalo để extension quét.</div>';
   }
 }
@@ -986,7 +999,11 @@ ipcRenderer.send('get-downloads');
 
 ipcRenderer.on('recent-chats', (event, info) => {
   if (info.profileId === activeProfileId) {
-    workspaceData.recentChats = info.chats;
+    workspaceData.recentChats = sanitizeRecentChats(info.chats);
+    const list = document.getElementById('campaign-target-list');
+    if (list && list.querySelector('input[name="camp_target"]')) {
+      renderCampaignTargets('recent');
+    }
   }
 });
 

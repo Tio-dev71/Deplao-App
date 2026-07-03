@@ -657,37 +657,80 @@ function createWindow() {
     const view = requestedProfileId && browserViews[requestedProfileId];
     if (!view || !message || !chatName) return { ok: false, message: 'Thiếu thông tin người nhận, tin nhắn, hoặc tab Zalo.' };
     try {
-      const safeName = JSON.stringify(String(chatName).trim());
+      const safeName = JSON.stringify(String(chatName || ''));
       const safeMessage = JSON.stringify(String(message));
       const result = await view.webContents.executeJavaScript(`
         (function() {
-          function getVisibleText(el) { return ((el && (el.innerText || el.textContent)) || '').replace(/\\s+/g, ' ').trim(); }
+          function normalizeText(value) {
+            return String(value || '')
+              .normalize('NFC')
+              .replace(/[\u200B-\u200D\uFEFF]/g, '')
+              .replace(/\\s+/g, ' ')
+              .trim();
+          }
+          function getVisibleText(el) {
+            return normalizeText((el && (el.innerText || el.textContent)) || '');
+          }
           function clickElement(el) {
             try {
+              if (!el) return false;
+              if (el.scrollIntoView) el.scrollIntoView({ block: 'center' });
               el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
               el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
               el.click();
               return true;
             } catch (e) { return false; }
           }
-          var items = document.querySelectorAll('.msg-item, [data-id], .group-board-item');
-          var targetEl = null;
+          var wantedName = normalizeText(${safeName});
+          var items = Array.from(document.querySelectorAll('.msg-item, [data-id], .group-board-item'));
+          var exactMatch = null;
+          var fuzzyMatch = null;
           for (var i = 0; i < items.length; i++) {
-            var nameEl = items[i].querySelector('.conv-item-title__name, .item-title__name, .item-title, .truncate');
-            if (nameEl && getVisibleText(nameEl) === ${safeName}) {
-              targetEl = items[i];
-              break;
-            }
+            var item = items[i];
+            var nameEl = item.querySelector('.conv-item-title__name, .item-title__name, .item-title, .truncate');
+            var itemName = getVisibleText(nameEl);
+            var itemText = getVisibleText(item);
+            if (!itemName && !itemText) continue;
+            if (!exactMatch && itemName === wantedName) exactMatch = item;
+            if (!fuzzyMatch && itemName && (itemText.includes(wantedName) || wantedName.includes(itemName))) fuzzyMatch = item;
           }
-          if (!targetEl) return { ok: false, message: 'Không tìm thấy cuộc hội thoại: ' + ${safeName} };
+          var targetEl = exactMatch || fuzzyMatch;
+          if (!targetEl) return { ok: false, message: 'Không tìm thấy cuộc hội thoại: ' + wantedName };
           clickElement(targetEl);
-          return { ok: true, wait: true };
+          return { ok: true, wait: true, matched: getVisibleText(targetEl) };
         })();
       `);
       if (!result || !result.ok) return result || { ok: false, message: 'Failed to switch chat.' };
-      
-      // Wait for chat to load
-      await new Promise(resolve => setTimeout(resolve, 800));
+
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        await new Promise(resolve => setTimeout(resolve, attempt < 3 ? 500 : 800));
+        const ready = await view.webContents.executeJavaScript(`
+          (function() {
+            function normalizeText(value) {
+              return String(value || '')
+                .normalize('NFC')
+                .replace(/[\u200B-\u200D\uFEFF]/g, '')
+                .replace(/\\s+/g, ' ')
+                .trim();
+            }
+            function findInput() {
+              return document.getElementById('richInput') ||
+                     document.querySelector('#chatInput') ||
+                     document.querySelector('.chat-input [contenteditable="true"]') ||
+                     document.querySelector('[id*="input_line_"]');
+            }
+            var headerEl = document.querySelector('.header-title, .title-name, .conv-title, [class*="header"] [class*="title"]');
+            var headerText = normalizeText((headerEl && (headerEl.innerText || headerEl.textContent)) || '');
+            var wantedName = normalizeText(${safeName});
+            var input = findInput();
+            return { ok: !!input, headerText: headerText, matched: !wantedName || !headerText ? false : (headerText === wantedName || headerText.includes(wantedName) || wantedName.includes(headerText)) };
+          })();
+        `);
+        if (ready && ready.ok && (ready.matched || attempt >= 4)) break;
+        if (attempt === 11) {
+          return { ok: false, message: `Đã click hội thoại nhưng chưa mở được ô chat cho: ${String(chatName).trim()}` };
+        }
+      }
 
       const sendResult = await view.webContents.executeJavaScript(`
         (function() {

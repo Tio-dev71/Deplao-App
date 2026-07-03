@@ -227,20 +227,30 @@ function runInjection(currentSettings) {
         if (!isZalo) return;
         var chats = [];
         try {
+          function normalizeChatText(value) {
+            return String(value || '')
+              .normalize('NFC')
+              .replace(/[\u200B-\u200D\uFEFF]/g, '')
+              .replace(/\s+/g, ' ')
+              .trim();
+          }
+          function isBlockedChatName(name) {
+            var blocked = ['tin nhắn', 'danh bạ', 'zalo cloud', 'công cụ', 'giao việc', 'lịch sử đồng bộ', 'cài đặt'];
+            var lower = normalizeChatText(name).toLowerCase();
+            return blocked.some(function(keyword) { return lower === keyword || lower.includes(keyword); });
+          }
           var items = document.querySelectorAll('.msg-item, [data-id], .group-board-item');
           items.forEach(function(item) {
             var nameEl = item.querySelector('.conv-item-title__name, .item-title__name, .item-title, .truncate');
-            if (nameEl) {
-               var name = (nameEl.innerText || '').replace(/\s+/g, ' ').trim();
-               var exclude = ['Tin nhắn', 'Danh bạ', 'Zalo Cloud', 'Công cụ', 'Giao việc', 'Lịch sử đồng bộ'];
-               if (name && !chats.includes(name) && !exclude.includes(name)) {
+            var looksLikeChat = item.querySelector('img, .avatar, .zavatar, .conv-item-title__name, .item-title__name');
+            if (nameEl && looksLikeChat) {
+               var name = normalizeChatText(nameEl.innerText || nameEl.textContent || '');
+               if (name && !chats.includes(name) && !isBlockedChatName(name)) {
                   chats.push(name);
                }
             }
           });
-          if (chats.length > 0) {
-            window.messengerApp.sendRecentChats(chats);
-          }
+          window.messengerApp.sendRecentChats(chats);
         } catch (e) {}
       }
       setInterval(extractRecentChats, 6000);
