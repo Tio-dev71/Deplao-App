@@ -649,6 +649,7 @@ function createWindow() {
       `);
       if (!focusResult || !focusResult.ok) return focusResult;
 
+      if (view.webContents.focus) view.webContents.focus();
       view.webContents.insertText(String(message));
       await new Promise(resolve => setTimeout(resolve, 50));
 
@@ -744,6 +745,7 @@ function createWindow() {
 
       if (result && !result.found) {
         // Fallback to Search
+        // Fallback to Search
         const searchBoxReady = await view.webContents.executeJavaScript(`
           (function() {
             var input = document.querySelector('#contact-search-input');
@@ -758,6 +760,9 @@ function createWindow() {
           })();
         `);
         if (!searchBoxReady) return { ok: false, message: 'Không tìm thấy ô tìm kiếm trên Zalo.' };
+        
+        if (view.webContents.focus) view.webContents.focus();
+        view.webContents.insertText(String(chatName));
         
         let searchClick = false;
         for (let s = 0; s < 3; s++) {
@@ -828,55 +833,31 @@ function createWindow() {
             var headerText = '';
             var input = findInput();
             
-            var debugInfo = '';
             if (input) {
-              var container = input;
-              for(var k = 0; k < 15 && container.parentElement; k++) {
-                 container = container.parentElement;
-                 if (container.tagName === 'MAIN' || container.id === 'chatView') break;
-              }
-              var leafs = Array.from(container.querySelectorAll('div, span, h1, h2, h3, h4, b, strong')).filter(el => el.children.length === 0);
-              var validTexts = [];
+              // Search DOM for the header, excluding the sidebar
+              var leafs = Array.from(document.querySelectorAll('div, span, h1, h2, h3, h4, b, strong')).filter(el => el.children.length === 0);
               for (var i = 0; i < leafs.length; i++) {
-                var txt = normalizeText(leafs[i].innerText || leafs[i].textContent);
-                if (txt && txt.length > 1) {
-                  validTexts.push(txt);
-                  if (validTexts.length > 10) break;
+                var el = leafs[i];
+                // Exclude sidebar and search results
+                if (el.closest('.msg-item, .conv-item, [id*="contact-search"], .ReactVirtualized__Grid, .nav__tabs, .sidebar')) continue;
+                
+                var txt = normalizeText(el.innerText || el.textContent);
+                if (txt && isMatch(txt)) {
+                   headerText = txt;
+                   break;
                 }
               }
-              for (var i = 0; i < validTexts.length; i++) {
-                if (isMatch(validTexts[i])) {
-                  headerText = validTexts[i];
-                  break;
-                }
+              // Fallback to document title
+              if (!headerText && document.title && isMatch(normalizeText(document.title))) {
+                 headerText = wantedName;
               }
-            } else {
-               // Dump the exact element that contains the target name to see its classes
-               var targetEls = Array.from(document.querySelectorAll('div, span, p')).filter(el => {
-                 var txt = el.innerText || el.textContent;
-                 return txt && txt.includes(wantedName) && el.children.length === 0;
-               });
-               if (targetEls.length > 0) {
-                 var sampleItems = targetEls.map(el => {
-                   var path = [];
-                   var curr = el;
-                   for(var p=0; p<5 && curr; p++) {
-                     path.unshift(curr.tagName + (curr.id ? '#' + curr.id : '') + '.' + curr.className.split(' ').join('.'));
-                     curr = curr.parentElement;
-                   }
-                   return path.join(' > ');
-                 }).join(' || ');
-                 debugInfo = 'NAME FOUND IN: ' + sampleItems;
-               } else {
-                 debugInfo = 'NAME NOT FOUND IN DOM';
-               }
             }
 
             return { 
               ok: !!input, 
               headerText: headerText, 
               matched: isMatch(headerText),
-              debugHeader: headerText || debugInfo || (input ? 'Found input but no match in top 10 texts' : ''),
+              debugHeader: headerText || (input ? 'Found input but no match in chat area' : 'Input not found'),
               debugWanted: wantedName
             };
           })();
