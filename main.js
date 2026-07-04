@@ -833,20 +833,32 @@ function createWindow() {
             var headerText = '';
             var input = findInput();
             
+            var headerPaths = [];
             if (input) {
-              // Search DOM for the header, excluding the sidebar
-              var leafs = Array.from(document.querySelectorAll('div, span, h1, h2, h3, h4, b, strong')).filter(el => el.children.length === 0);
-              for (var i = 0; i < leafs.length; i++) {
-                var el = leafs[i];
-                // Exclude sidebar and search results
-                if (el.closest('.msg-item, .conv-item, [id*="contact-search"], .ReactVirtualized__Grid, .nav__tabs, .sidebar')) continue;
-                
-                var txt = normalizeText(el.innerText || el.textContent);
-                if (txt && isMatch(txt)) {
-                   headerText = txt;
-                   break;
+              var headerSelectors = [
+                '.chat-info__header .title',
+                '.chat-info__header .truncate',
+                '.chat-info__header',
+                '#chatView .title-name',
+                '#chatView .header-title',
+                'header .title',
+                '[data-id="div_Main_Header"] .title'
+              ];
+              
+              var foundMatch = false;
+              for (var s = 0; s < headerSelectors.length; s++) {
+                var els = Array.from(document.querySelectorAll(headerSelectors[s]));
+                for (var i = 0; i < els.length; i++) {
+                  var txt = normalizeText(els[i].innerText || els[i].textContent);
+                  if (txt && isMatch(txt)) {
+                     headerText = txt;
+                     foundMatch = true;
+                     break;
+                  }
                 }
+                if (foundMatch) break;
               }
+
               // Fallback to document title
               if (!headerText && document.title && isMatch(normalizeText(document.title))) {
                  headerText = wantedName;
@@ -857,7 +869,7 @@ function createWindow() {
               ok: !!input, 
               headerText: headerText, 
               matched: isMatch(headerText),
-              debugHeader: headerText || (input ? 'Found input but no match in chat area' : 'Input not found'),
+              debugHeader: headerText ? 'MATCHED HEADER' : 'NO HEADER MATCH',
               debugWanted: wantedName
             };
           })();
