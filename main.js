@@ -746,18 +746,18 @@ function createWindow() {
         // Fallback to Search
         const searchBoxReady = await view.webContents.executeJavaScript(`
           (function() {
-            var searchInput = document.getElementById('contact-search-input') || document.querySelector('input[placeholder*="Tìm kiếm"]');
-            if (searchInput) {
-              searchInput.focus();
-              document.execCommand('selectAll', false, null);
+            var input = document.querySelector('#contact-search-input');
+            if (input) {
+              input.focus();
+              var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+              nativeInputValueSetter.call(input, ${safeName});
+              input.dispatchEvent(new Event('input', { bubbles: true }));
               return true;
             }
             return false;
           })();
         `);
-        if (!searchBoxReady) return { ok: false, message: 'Không tìm thấy cuộc hội thoại và không mở được ô tìm kiếm: ' + String(chatName) };
-
-        view.webContents.insertText(String(chatName));
+        if (!searchBoxReady) return { ok: false, message: 'Không tìm thấy ô tìm kiếm trên Zalo.' };
         
         let searchClick = false;
         for (let s = 0; s < 3; s++) {
@@ -768,23 +768,25 @@ function createWindow() {
                 return String(value || '').normalize('NFC').replace(/[\\u200B-\\u200D\\uFEFF]/g, '').replace(/\\s+/g, ' ').trim();
               }
               var wantedName = normalizeText(${safeName});
-              var items = Array.from(document.querySelectorAll('.global-search-result .msg-item, #contact-search-result .msg-item, .ReactVirtualized__Grid .msg-item, [id*="search"] .msg-item'));
+              var items = Array.from(document.querySelectorAll('.global-search-result .msg-item, #contact-search-result .msg-item, .ReactVirtualized__Grid .msg-item, [id*="search"] .msg-item, .search-res-item'));
               if (!items.length) items = Array.from(document.querySelectorAll('.msg-item'));
               var exactMatch = null, fuzzyMatch = null;
               for (var i = 0; i < items.length; i++) {
                 var item = items[i];
-                var nameEl = item.querySelector('.conv-item-title__name, .item-title__name, .item-title, .truncate');
+                var nameEl = item.querySelector('.conv-item-title__name, .item-title__name, .item-title, .truncate') || item;
                 var itemName = normalizeText((nameEl && (nameEl.innerText || nameEl.textContent)) || '');
                 if (itemName === wantedName) exactMatch = item;
                 if (!fuzzyMatch && itemName && itemName.includes(wantedName)) fuzzyMatch = item;
               }
               var target = exactMatch || fuzzyMatch;
               if (target) {
-                var clickTarget = target.querySelector('.conv-item-title__name, .item-title__name, .truncate') || target;
                 if (target.scrollIntoView) target.scrollIntoView({ block: 'center' });
-                clickTarget.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
-                clickTarget.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
-                clickTarget.click();
+                var rect = target.getBoundingClientRect();
+                var x = rect.left + rect.width / 2;
+                var y = rect.top + rect.height / 2;
+                var opts = { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y };
+                target.dispatchEvent(new MouseEvent('mousedown', opts));
+                target.dispatchEvent(new MouseEvent('mouseup', opts));
                 target.click();
                 return true;
               }
@@ -826,15 +828,13 @@ function createWindow() {
             var headerText = '';
             var input = findInput();
             
+            var debugInfo = '';
             if (input) {
-              // Walk up the DOM to find the main chat container
               var container = input;
               for(var k = 0; k < 15 && container.parentElement; k++) {
                  container = container.parentElement;
                  if (container.tagName === 'MAIN' || container.id === 'chatView') break;
               }
-              
-              // Extract the first 10 text elements in the container (header is always at the top)
               var leafs = Array.from(container.querySelectorAll('div, span, h1, h2, h3, h4, b, strong')).filter(el => el.children.length === 0);
               var validTexts = [];
               for (var i = 0; i < leafs.length; i++) {
@@ -844,21 +844,39 @@ function createWindow() {
                   if (validTexts.length > 10) break;
                 }
               }
-              
-              // Check if any of the top texts match our target name
               for (var i = 0; i < validTexts.length; i++) {
                 if (isMatch(validTexts[i])) {
                   headerText = validTexts[i];
                   break;
                 }
               }
+            } else {
+               // Dump the exact element that contains the target name to see its classes
+               var targetEls = Array.from(document.querySelectorAll('div, span, p')).filter(el => {
+                 var txt = el.innerText || el.textContent;
+                 return txt && txt.includes(wantedName) && el.children.length === 0;
+               });
+               if (targetEls.length > 0) {
+                 var sampleItems = targetEls.map(el => {
+                   var path = [];
+                   var curr = el;
+                   for(var p=0; p<5 && curr; p++) {
+                     path.unshift(curr.tagName + (curr.id ? '#' + curr.id : '') + '.' + curr.className.split(' ').join('.'));
+                     curr = curr.parentElement;
+                   }
+                   return path.join(' > ');
+                 }).join(' || ');
+                 debugInfo = 'NAME FOUND IN: ' + sampleItems;
+               } else {
+                 debugInfo = 'NAME NOT FOUND IN DOM';
+               }
             }
 
             return { 
               ok: !!input, 
               headerText: headerText, 
               matched: isMatch(headerText),
-              debugHeader: headerText || (input ? 'Found input but no match in top 10 texts' : ''),
+              debugHeader: headerText || debugInfo || (input ? 'Found input but no match in top 10 texts' : ''),
               debugWanted: wantedName
             };
           })();
