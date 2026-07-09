@@ -103,7 +103,7 @@ function closeOverlay(id) {
   if (!stillOpen && !appLocked && !toolsLauncherOpen) ipcRenderer.send('set-browserview-visibility', true);
 }
 function escapeHtml(s) { return String(s || '').replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-function platformIcon(platform) { return { zalo: 'Z', telegram: '✈', messenger: 'M', fanpage: '🚩', whatsapp: 'W', teams: 'T', gmail: 'G' }[platform || 'zalo'] || 'A'; }
+function platformIcon(platform) { return { zalo: 'Z', telegram: '✈', messenger: 'M', fanpage: '🚩', facebook: 'F', whatsapp: 'W', teams: 'T', gmail: 'G', custom: '🔗' }[platform || 'zalo'] || 'A'; }
 function formatDate(ts) { return new Date(ts || Date.now()).toLocaleString('vi-VN'); }
 function getActiveProfile() { return profiles.find((p) => p.id === activeProfileId) || profiles[0] || null; }
 function getZaloProfiles() { return profiles.filter((profile) => (profile.platform || 'zalo') === 'zalo'); }
@@ -237,6 +237,9 @@ function openModal(profileToEdit = null) {
   nameInput.value = profileToEdit ? profileToEdit.name : '';
   proxyInput.value = profileToEdit?.proxy || '';
   platformInput.value = profileToEdit?.platform || 'zalo';
+  const customUrlInput = document.getElementById('profile-custom-url-input');
+  customUrlInput.value = profileToEdit?.customUrl || '';
+  customUrlInput.style.display = (profileToEdit?.platform === 'custom') ? 'block' : 'none';
   document.getElementById('modal-delete').style.display = profileToEdit ? 'inline-flex' : 'none';
   updateAvatarPreview();
   openOverlay('modal-overlay');
@@ -720,7 +723,11 @@ avatarInput.onchange = (e) => {
     reader.readAsDataURL(file);
   }
 };
-platformInput.addEventListener('change', updateAvatarPreview);
+platformInput.addEventListener('change', () => {
+  updateAvatarPreview();
+  const customUrlInput = document.getElementById('profile-custom-url-input');
+  customUrlInput.style.display = (platformInput.value === 'custom') ? 'block' : 'none';
+});
 nameInput.addEventListener('input', updateAvatarPreview);
 
 document.querySelectorAll('[data-close]').forEach((button) => { button.onclick = () => closeOverlay(button.getAttribute('data-close')); });
@@ -741,16 +748,19 @@ document.getElementById('modal-delete').onclick = () => {
 };
 document.getElementById('modal-save').onclick = () => {
   const name = nameInput.value.trim() || `Tài khoản ${profiles.length + 1}`;
+  const customUrl = document.getElementById('profile-custom-url-input').value.trim();
+  if (platformInput.value === 'custom' && !customUrl) return alert('Vui lòng nhập URL cho Custom Link.');
   if (editingProfile) {
     editingProfile.name = name;
     editingProfile.proxy = proxyInput.value.trim();
     editingProfile.platform = platformInput.value;
     editingProfile.avatar = tempAvatarPath;
+    editingProfile.customUrl = platformInput.value === 'custom' ? customUrl : '';
     ipcRenderer.send('update-profile-settings', editingProfile);
     trackEvent('profile_updated', { id: editingProfile.id });
   } else {
     const id = String(Date.now());
-    profiles.push({ id, name, avatar: tempAvatarPath, partition: `persist:nick_${id}`, platform: platformInput.value, proxy: proxyInput.value.trim() });
+    profiles.push({ id, name, avatar: tempAvatarPath, partition: `persist:nick_${id}`, platform: platformInput.value, proxy: proxyInput.value.trim(), customUrl: platformInput.value === 'custom' ? customUrl : '' });
     activeProfileId = id;
     trackEvent('profile_created', { id });
   }

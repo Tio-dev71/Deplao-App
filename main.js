@@ -296,6 +296,13 @@ function updateBrowserViewBounds() {
 function isInternalUrl(url) {
   return ['chat.zalo.me', 'id.zalo.me', 'messenger.com', 'facebook.com', 'web.whatsapp.com', 'whatsapp.com', 'teams.microsoft.com', 'microsoft.com', 'live.com', 'office.com', 'google.com', 'gmail.com', 'web.telegram.org', 'telegram.org', 't.me'].some(d => url.includes(d));
 }
+function getProfilePlatform(profileId) {
+  try {
+    const ws = getWorkspaceState();
+    const profile = (ws.data.profiles || []).find(p => p.id === profileId);
+    return profile?.platform || 'zalo';
+  } catch { return 'zalo'; }
+}
 function setupWebContents(contents, profileId) {
   contents.setWindowOpenHandler(({ url }) => {
     if (url === 'about:blank' || url.startsWith('blob:') || url.startsWith('file:')) return { action: 'allow' };
@@ -306,6 +313,12 @@ function setupWebContents(contents, profileId) {
     return { action: 'deny' };
   });
   contents.on('will-navigate', (event, url) => {
+    // Allow free navigation for custom platform profiles
+    let ownerProfileId = null;
+    for (const [id, view] of Object.entries(browserViews)) {
+      if (view && view.webContents === contents) { ownerProfileId = id; break; }
+    }
+    if (ownerProfileId && getProfilePlatform(ownerProfileId) === 'custom') return;
     if (isInternalUrl(url)) return;
     event.preventDefault();
     let finalUrl = url;
@@ -497,10 +510,12 @@ function createWindow() {
       let url = ZALO_URL; let ua = USER_AGENT;
       if (profile.platform === 'messenger') url = 'https://www.messenger.com/';
       else if (profile.platform === 'fanpage') url = 'https://www.facebook.com/latest/inbox/';
+      else if (profile.platform === 'facebook') url = 'https://www.facebook.com/';
       else if (profile.platform === 'whatsapp') url = 'https://web.whatsapp.com/';
       else if (profile.platform === 'teams') url = 'https://teams.microsoft.com/';
       else if (profile.platform === 'gmail') url = 'https://mail.google.com/';
       else if (profile.platform === 'telegram') url = 'https://web.telegram.org/a/';
+      else if (profile.platform === 'custom' && profile.customUrl) url = profile.customUrl;
       view.webContents.loadURL(url, { userAgent: ua });
     }
     if (isBrowserViewVisible) {
