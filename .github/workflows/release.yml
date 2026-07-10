@@ -89,11 +89,12 @@ jobs:
           name: win-build
           path: release-assets
 
-      - name: Publish release assets
-        uses: softprops/action-gh-release@v2
+      - name: Copy files to VPS via SCP
+        uses: appleboy/scp-action@v0.1.7
         with:
-          tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
-          draft: false
-          prerelease: false
-          files: release-assets/**
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "release-assets/*"
+          target: "/var/www/9meta-updates"
+          strip_components: 1
