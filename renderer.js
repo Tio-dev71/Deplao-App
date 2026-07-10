@@ -52,6 +52,7 @@ const campaignTargetSelections = {
   crm: new Set(),
   recent: new Set(),
 };
+let subscriptionFeatures = { maxAccountsPerApp: null, unlimitedProxies: false };
 
 function normalizeWorkspaceData(data = {}) {
   return {
@@ -759,6 +760,17 @@ document.getElementById('modal-save').onclick = () => {
     ipcRenderer.send('update-profile-settings', editingProfile);
     trackEvent('profile_updated', { id: editingProfile.id });
   } else {
+    // Kiểm tra giới hạn số tài khoản theo nền tảng
+    const limit = subscriptionFeatures.maxAccountsPerApp;
+    if (limit !== null && limit !== undefined) {
+      const selectedPlatform = platformInput.value;
+      const currentCount = profiles.filter(p => (p.platform || 'zalo') === selectedPlatform).length;
+      if (currentCount >= limit) {
+        const platformNames = { zalo: 'Zalo', telegram: 'Telegram', messenger: 'Messenger', fanpage: 'FB Fanpage', facebook: 'Facebook', whatsapp: 'WhatsApp', teams: 'Teams', gmail: 'Gmail', custom: 'Custom Link' };
+        const pName = platformNames[selectedPlatform] || selectedPlatform;
+        return alert(`Gói hiện tại chỉ cho phép tối đa ${limit} tài khoản ${pName}. Bạn đã dùng hết ${currentCount}/${limit}.\n\nVui lòng nâng cấp gói để thêm tài khoản.`);
+      }
+    }
     const id = String(Date.now());
     profiles.push({ id, name, avatar: tempAvatarPath, partition: `persist:nick_${id}`, platform: platformInput.value, proxy: proxyInput.value.trim(), customUrl: platformInput.value === 'custom' ? customUrl : '' });
     activeProfileId = id;
@@ -1020,6 +1032,9 @@ async function checkSubscription() {
     if (!data || data.isActive === false) {
       showExpired('Gói đăng ký của bạn đã hết hạn. Vui lòng thanh toán gia hạn để tiếp tục sử dụng.', data?.upgradeUrl || 'https://tiodev.io.vn/pricing');
       return false;
+    }
+    if (data.features) {
+      subscriptionFeatures = data.features;
     }
     unlockAppFromAuth();
     return true;
