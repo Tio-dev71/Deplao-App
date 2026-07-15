@@ -523,7 +523,13 @@ function createWindow() {
     }
   });
   ipcMain.on('update-profile-settings', (event, profile) => {
+    if (browserViews[profile.id]) {
+      if (activeProfileId === profile.id && mainWindow) mainWindow.setBrowserView(null);
+      browserViews[profile.id].webContents.destroy();
+      delete browserViews[profile.id];
+    }
     const sess = session.fromPartition(profile.partition);
+    setupDownloads(sess);
     if (profile.proxy) {
       let proxyRules = profile.proxy; const parts = profile.proxy.trim().split(':');
       if (parts.length === 4) { proxyRules = `http://${parts[0]}:${parts[1]}`; proxyCredentials[`${parts[0]}:${parts[1]}`] = { username: parts[2], password: parts[3] }; }

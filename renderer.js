@@ -67,17 +67,40 @@ function normalizeWorkspaceData(data = {}) {
     aiSettings: { ...defaultState.aiSettings, ...(data.aiSettings || {}) },
   };
 }
+function createProfileId() {
+  return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function createProfilePartition(id, platform = 'zalo') {
+  const safePlatform = String(platform || 'zalo').replace(/[^a-z0-9_-]/gi, '').toLowerCase();
+  return `persist:${safePlatform}_${id}`;
+}
+
 function normalizeProfiles(list) {
   const arr = Array.isArray(list) ? list : [];
   if (!arr.length) {
-    return [{ id: String(Date.now()), name: 'Nick 1', partition: `persist:nick_${Date.now()}`, platform: 'zalo' }];
+    const id = createProfileId();
+    return [{ id, name: 'Nick 1', partition: createProfilePartition(id, 'zalo'), platform: 'zalo' }];
   }
+  const usedIds = new Set();
+  const usedPartitions = new Set();
   return arr.map((p) => {
     let avatarUrl = p.avatar;
     if (avatarUrl && !avatarUrl.startsWith('http') && !avatarUrl.startsWith('data:')) {
       avatarUrl = '';
     }
-    return { ...p, avatar: avatarUrl, platform: p.platform || 'zalo', partition: p.partition || `persist:nick_${p.id}` };
+    let id = p.id || createProfileId();
+    while (usedIds.has(id)) id = createProfileId();
+    usedIds.add(id);
+
+    const platform = p.platform || 'zalo';
+    let partition = p.partition || createProfilePartition(id, platform);
+    if (usedPartitions.has(partition)) {
+      partition = createProfilePartition(`${id}_${Math.random().toString(36).slice(2, 8)}`, platform);
+    }
+    usedPartitions.add(partition);
+
+    return { ...p, id, avatar: avatarUrl, platform, partition };
   });
 }
 function persistWorkspace() {
@@ -752,11 +775,16 @@ document.getElementById('modal-save').onclick = () => {
   const customUrl = document.getElementById('profile-custom-url-input').value.trim();
   if (platformInput.value === 'custom' && !customUrl) return alert('Vui lòng nhập URL cho Custom Link.');
   if (editingProfile) {
+    const nextPlatform = platformInput.value;
+    const previousPlatform = editingProfile.platform || 'zalo';
     editingProfile.name = name;
     editingProfile.proxy = proxyInput.value.trim();
-    editingProfile.platform = platformInput.value;
+    editingProfile.platform = nextPlatform;
     editingProfile.avatar = tempAvatarPath;
-    editingProfile.customUrl = platformInput.value === 'custom' ? customUrl : '';
+    editingProfile.customUrl = nextPlatform === 'custom' ? customUrl : '';
+    if (previousPlatform !== nextPlatform) {
+      editingProfile.partition = createProfilePartition(editingProfile.id, nextPlatform);
+    }
     ipcRenderer.send('update-profile-settings', editingProfile);
     trackEvent('profile_updated', { id: editingProfile.id });
   } else {
@@ -771,8 +799,9 @@ document.getElementById('modal-save').onclick = () => {
         return alert(`Gói hiện tại chỉ cho phép tối đa ${limit} tài khoản ${pName}. Bạn đã dùng hết ${currentCount}/${limit}.\n\nVui lòng nâng cấp gói để thêm tài khoản.`);
       }
     }
-    const id = String(Date.now());
-    profiles.push({ id, name, avatar: tempAvatarPath, partition: `persist:nick_${id}`, platform: platformInput.value, proxy: proxyInput.value.trim(), customUrl: platformInput.value === 'custom' ? customUrl : '' });
+    const id = createProfileId();
+    const platform = platformInput.value;
+    profiles.push({ id, name, avatar: tempAvatarPath, partition: createProfilePartition(id, platform), platform, proxy: proxyInput.value.trim(), customUrl: platform === 'custom' ? customUrl : '' });
     activeProfileId = id;
     trackEvent('profile_created', { id });
   }
