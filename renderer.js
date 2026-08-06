@@ -52,7 +52,7 @@ const campaignTargetSelections = {
   crm: new Set(),
   recent: new Set(),
 };
-let subscriptionFeatures = { maxAccountsPerApp: null, unlimitedProxies: false };
+const subscriptionFeatures = { maxAccountsPerApp: null, unlimitedProxies: true };
 
 function normalizeWorkspaceData(data = {}) {
   return {
@@ -788,17 +788,6 @@ document.getElementById('modal-save').onclick = () => {
     ipcRenderer.send('update-profile-settings', editingProfile);
     trackEvent('profile_updated', { id: editingProfile.id });
   } else {
-    // Kiểm tra giới hạn số tài khoản theo nền tảng
-    const limit = subscriptionFeatures.maxAccountsPerApp;
-    if (limit !== null && limit !== undefined) {
-      const selectedPlatform = platformInput.value;
-      const currentCount = profiles.filter(p => (p.platform || 'zalo') === selectedPlatform).length;
-      if (currentCount >= limit) {
-        const platformNames = { zalo: 'Zalo', telegram: 'Telegram', messenger: 'Messenger', fanpage: 'FB Fanpage', facebook: 'Facebook', whatsapp: 'WhatsApp', teams: 'Teams', gmail: 'Gmail', custom: 'Custom Link' };
-        const pName = platformNames[selectedPlatform] || selectedPlatform;
-        return alert(`Gói hiện tại chỉ cho phép tối đa ${limit} tài khoản ${pName}. Bạn đã dùng hết ${currentCount}/${limit}.\n\nVui lòng nâng cấp gói để thêm tài khoản.`);
-      }
-    }
     const id = createProfileId();
     const platform = platformInput.value;
     profiles.push({ id, name, avatar: tempAvatarPath, partition: createProfilePartition(id, platform), platform, proxy: proxyInput.value.trim(), customUrl: platform === 'custom' ? customUrl : '' });
@@ -967,112 +956,7 @@ document.getElementById('btn-pin').classList.toggle('active', !!settings.alwaysO
 const shieldButton = document.getElementById('btn-shield');
 if (shieldButton) shieldButton.classList.toggle('active', !!settings.zadarkShield);
 
-const API_BASE_URL = localStorage.getItem('API_URL') || 'https://api.tiodev.io.vn/v1';
-const APP_VERSION = require('./package.json').version;
-function getOrCreateDeviceId() {
-  const existing = localStorage.getItem('device_id');
-  if (existing) return existing;
-  const created = `desktop_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
-  localStorage.setItem('device_id', created);
-  return created;
-}
-function clearAuthSession() {
-  localStorage.removeItem('access_token');
-  accessToken = null;
-}
-let accessToken = localStorage.getItem('access_token') || null;
-const authOverlay = document.getElementById('auth-overlay');
-const expiredOverlay = document.getElementById('expired-overlay');
-const authSubmit = document.getElementById('auth-submit');
-const authError = document.getElementById('auth-error');
-function showAuth() { ipcRenderer.send('set-browserview-visibility', false); authOverlay.style.display = 'flex'; expiredOverlay.style.display = 'none'; }
-function showExpired(message, upgradeUrl) {
-  ipcRenderer.send('set-browserview-visibility', false);
-  expiredOverlay.style.display = 'flex';
-  authOverlay.style.display = 'none';
-  if (message) document.getElementById('expired-message').innerText = message;
-  if (upgradeUrl) document.getElementById('expired-upgrade').onclick = () => shell.openExternal(upgradeUrl);
-}
-function unlockAppFromAuth() {
-  authOverlay.style.display = 'none';
-  expiredOverlay.style.display = 'none';
-  if (!appLocked) ipcRenderer.send('set-browserview-visibility', true);
-  if (activeProfileId) switchProfile(activeProfileId);
-}
-authSubmit.onclick = async () => {
-  const email = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value;
-  if (!email || !password) {
-    authError.innerText = 'Vui lòng nhập đầy đủ thông tin.';
-    authError.style.display = 'block';
-    return;
-  }
-  authSubmit.innerText = 'Đang đăng nhập...';
-  authSubmit.disabled = true;
-  authError.style.display = 'none';
-  try {
-    const res = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        password,
-        deviceId: getOrCreateDeviceId(),
-        appVersion: APP_VERSION,
-        os: process.platform,
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Đăng nhập thất bại');
-    accessToken = data.accessToken;
-    localStorage.setItem('access_token', accessToken);
-    await checkSubscription();
-  } catch (err) {
-    authError.innerText = err.message;
-    authError.style.display = 'block';
-  } finally {
-    authSubmit.innerText = 'Đăng nhập';
-    authSubmit.disabled = false;
-  }
-};
-document.getElementById('expired-logout').onclick = () => { clearAuthSession(); expiredOverlay.style.display = 'none'; showAuth(); };
-document.getElementById('btn-logout').onclick = () => { 
-  if (confirm('Bạn có chắc chắn muốn đăng xuất tài khoản 9Meta?')) {
-    clearAuthSession(); 
-    showAuth(); 
-  }
-};
-async function checkSubscription() {
-  if (!accessToken) {
-    showAuth();
-    return false;
-  }
-  try {
-    const res = await fetch(`${API_BASE_URL}/me/subscription`, { headers: { Authorization: `Bearer ${accessToken}` } });
-    if (res.status === 401 || res.status === 403) {
-      clearAuthSession();
-      showAuth();
-      return false;
-    }
-    if (!res.ok) {
-      throw new Error(`subscription_http_${res.status}`);
-    }
-    const data = await res.json();
-    if (!data || data.isActive === false) {
-      showExpired('Gói đăng ký của bạn đã hết hạn. Vui lòng thanh toán gia hạn để tiếp tục sử dụng.', data?.upgradeUrl || 'https://tiodev.io.vn/pricing');
-      return false;
-    }
-    if (data.features) {
-      subscriptionFeatures = data.features;
-    }
-    unlockAppFromAuth();
-    return true;
-  } catch (err) {
-    console.error('Lỗi kiểm tra bản quyền:', err);
-    showExpired('Không thể xác minh bản quyền lúc này. Vui lòng kiểm tra kết nối mạng hoặc đăng nhập lại để tiếp tục sử dụng.', 'https://tiodev.io.vn/pricing');
-    return false;
-  }
-}
+
 
 migrateLegacyProfiles();
 renderAll();
@@ -1090,5 +974,3 @@ ipcRenderer.on('recent-chats', (event, info) => {
 });
 
 if (settings.lockOnStartup) showLockOverlay(!hasLockPassword);
-if (!settings.lockOnStartup) checkSubscription();
-setInterval(() => { if (accessToken && !appLocked) checkSubscription(); }, 15 * 60 * 1000);
