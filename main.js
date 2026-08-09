@@ -781,10 +781,10 @@ function createWindow() {
           })();
         `);
         if (!searchBoxReady) return { ok: false, message: 'Không tìm thấy ô tìm kiếm trên Zalo.' };
-        
+
         if (view.webContents.focus) view.webContents.focus();
         view.webContents.insertText(String(chatName));
-        
+
         let searchClick = false;
         for (let s = 0; s < 3; s++) {
           await new Promise(r => setTimeout(r, 1000));

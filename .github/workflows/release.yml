@@ -89,16 +89,6 @@ jobs:
           name: win-build
           path: release-assets
 
-      - name: Copy files to VPS via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}
-          source: "release-assets/*"
-          target: "/var/www/9meta-updates"
-          strip_components: 1
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -108,3 +98,14 @@ jobs:
           files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy files to VPS via SCP
+        continue-on-error: true
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          source: "release-assets/*"
+          target: "/var/www/9meta-updates"
+          strip_components: 1
