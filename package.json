@@ -2,7 +2,7 @@
   "name": "9meta",
   "version": "1.8.9",
   "description": "9Meta - Quản lý đa tài khoản Zalo, Messenger, Fanpage, Telegram, WhatsApp...",
-  "main": "main.js",
+  "main": "main-bypass.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win",
@@ -56,6 +56,7 @@
     },
     "files": [
       "main.js",
+      "main-bypass.js",
       "preload.js",
       "renderer.js",
       "index.html",
