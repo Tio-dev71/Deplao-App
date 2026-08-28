@@ -779,9 +779,7 @@
       width: 100%;
     }
 
-    #lock-overlay .modal-box,
-    #auth-overlay .modal-box,
-    #expired-overlay .modal-box {
+    #lock-overlay .modal-box {
       width: 420px;
       text-align: center;
     }
@@ -845,13 +843,7 @@
           <path d="M14 14h6v6h-6z"></path>
         </svg>
       </button>
-      <button class="tool-btn" id="btn-logout" title="Đăng xuất" style="margin-top: 8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-          <polyline points="16 17 21 12 16 7"></polyline>
-          <line x1="21" y1="12" x2="9" y2="12"></line>
-        </svg>
-      </button>
+
     </div>
   </div>
 
@@ -1219,33 +1211,6 @@
     </div>
   </div>
 
-  <div id="auth-overlay" class="overlay">
-    <div class="modal-box">
-      <h2 style="margin-top:0; text-align:center;">🔑 Đăng nhập 9Meta</h2>
-      <p class="download-meta" style="text-align:center;">Vui lòng đăng nhập tài khoản đã mua gói để sử dụng.</p>
-      <input type="email" id="auth-email" class="modal-input" placeholder="Email">
-      <input type="password" id="auth-password" class="modal-input" placeholder="Mật khẩu">
-      <button class="modal-btn save w-full" id="auth-submit" style="margin-top:10px;">Đăng nhập</button>
-      <p id="auth-error" style="color:#ff7d97; font-size:13px; text-align:center; display:none; margin-top:12px;"></p>
-      <p style="text-align:center; margin-top:18px; margin-bottom:0; font-size:12px; color:#666; letter-spacing:0.5px;">
-        by <span
-          style="background:linear-gradient(90deg,#0a84ff,#5e5ce6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">Tiodev</span>
-      </p>
-    </div>
-  </div>
-
-  <div id="expired-overlay" class="overlay">
-    <div class="modal-box">
-      <h2 style="margin-top:0; color:#ff6e8f;">⚠️ Hết hạn bản quyền</h2>
-      <p id="expired-message" class="download-meta" style="font-size:14px;">Gói đăng ký của bạn đã hết hạn. Vui lòng
-        thanh toán gia hạn để tiếp tục sử dụng.</p>
-      <div class="row" style="justify-content:center;">
-        <button class="modal-btn cancel" id="expired-logout">Đăng xuất</button>
-        <button class="modal-btn save" id="expired-upgrade"
-          onclick="require('electron').shell.openExternal('https://tiodev.io.vn/pricing')">Gia hạn ngay</button>
-      </div>
-    </div>
-  </div>
 
   <script src="renderer.js"></script>
 </body>
