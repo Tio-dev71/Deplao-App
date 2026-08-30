@@ -1511,6 +1511,16 @@ document.querySelectorAll('[data-tool-action]').forEach((el) => {
   el.onclick = () => runToolAction(el.dataset.toolAction, true);
 });
 
+function renderAppVersionBadge() {
+  const badge = document.getElementById('app-version-badge');
+  if (!badge) return;
+  const version = String(require('./package.json').version || '').trim();
+  badge.textContent = version ? `v${version}` : '';
+  badge.hidden = !version;
+}
+
+renderAppVersionBadge();
+
 function getSavedFontSize() {
   return Math.max(12, Math.min(24, Number(localStorage.getItem('nha-yen-font-size')) || 16));
 }

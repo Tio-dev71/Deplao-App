@@ -231,3 +231,19 @@ test('unfriend batch keeps the concrete final failure visible', () => {
   assert.match(renderer, /\[IPC\] Main process không trả kết quả trong 30 giây/);
   assert.match(main, /runStepUntil[\s\S]*timeoutMs = 3_000[\s\S]*stage === 'DELETE' \|\| stage === 'CONFIRM'/);
 });
+
+test('topbar shows the app version as a small black badge next to the brand and opens the update tool', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const renderer = fs.readFileSync(path.join(root, 'renderer.js'), 'utf8');
+  const brand = html.match(/<span class="topbar-brand">[\s\S]*?<\/span>/)[0];
+  const versionCss = html.match(/\.topbar-version \{[\s\S]*?\}/)[0];
+
+  assert.match(brand, /Zalo<button id="app-version-badge"/);
+  assert.match(brand, /class="topbar-version"[^>]*data-tool-action="update"/);
+  assert.match(versionCss, /font-size: 12px/);
+  assert.match(versionCss, /color: #000/);
+  assert.match(versionCss, /-webkit-app-region: no-drag/);
+  assert.match(renderer, /function renderAppVersionBadge\(\)/);
+  assert.match(renderer, /require\('\.\/package\.json'\)\.version/);
+  assert.ok(renderer.includes('badge.textContent = version ? `v${version}` : ' + "''"));
+});

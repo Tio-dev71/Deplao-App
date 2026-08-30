@@ -165,6 +165,20 @@
 
     .topbar-brand img { width: 24px; height: 24px; border-radius: 6px; }
 
+    .topbar-version {
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 600;
+      color: #000;
+      background: none;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+      -webkit-app-region: no-drag;
+    }
+
+    .topbar-version:hover, .topbar-version:focus-visible { text-decoration: underline; }
+
     .topbar-actions { position: relative; margin-right: 138px; display: flex; align-items: center; gap: 6px; -webkit-app-region: no-drag; }
     .topbar-quote { height: 32px; padding: 0 14px; border: 1px solid #d8dee8; border-radius: 8px; background: #fff; color: #1767d9; font-weight: 700; cursor: pointer; }
     .topbar-quote:hover, .topbar-quote.active { color: #fff; border-color: #1767d9; background: #1767d9; }
@@ -1145,7 +1159,7 @@
       </nav>
     </div>
     <header id="app-topbar">
-      <span class="topbar-brand"><img src="brand-logo.png" alt="">Nhà Yến Zalo</span>
+      <span class="topbar-brand"><img src="brand-logo.png" alt="">Nhà Yến Zalo<button id="app-version-badge" class="topbar-version" type="button" data-tool-action="update" title="Phiên bản ứng dụng · bấm để kiểm tra cập nhật" aria-label="Phiên bản ứng dụng, bấm để kiểm tra cập nhật"></button></span>
       <div class="topbar-actions">
         <button id="quick-replies-topbar" class="topbar-quote" type="button" title="Mở tin nhắn nhanh" aria-label="Mở tin nhắn nhanh" aria-expanded="false">Tin nhắn nhanh</button>
         <button id="send-video-topbar" class="topbar-quote" type="button" title="Chọn video cho hội thoại hiện tại" aria-label="Gửi video">Gửi video</button>
