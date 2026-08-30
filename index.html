@@ -5,11 +5,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description"
-    content="9Meta - Quản lý đa tài khoản Zalo, Messenger, Fanpage, Telegram, WhatsApp trên Desktop với CRM, Campaign, AI và Analytics.">
-  <title>9Meta Control Center</title>
+    content="Nhà Yến Zalo - Quản lý nhiều tài khoản, người dùng và nhóm Zalo trên Desktop.">
+  <title>Nhà Yến Zalo</title>
   <style>
     :root {
-      --sidebar: 72px;
+      --profile-rail: 68px;
+      --topbar: 42px;
+      --sidebar: var(--profile-rail);
+      --app-font-size: 16px;
       --bg: #08111f;
       --panel: rgba(11, 18, 34, .78);
       --panel-soft: rgba(255, 255, 255, .06);
@@ -58,26 +61,29 @@
 
     #app-shell {
       display: grid;
-      grid-template-columns: var(--sidebar) 1fr;
+      grid-template-columns: var(--profile-rail) 1fr var(--utility-panel-width, 0px);
+      grid-template-rows: var(--topbar) 1fr;
       height: 100%;
       position: relative;
     }
 
-    #sidebar {
+    #profile-rail {
+      grid-column: 1;
+      grid-row: 2;
       height: 100%;
       backdrop-filter: blur(22px);
       -webkit-backdrop-filter: blur(22px);
-      background: linear-gradient(180deg, rgba(9, 14, 26, .92), rgba(10, 18, 31, .72));
+      background: #fff;
       border-right: 1px solid var(--line);
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 14px 0 10px;
-      box-shadow: 8px 0 40px rgba(0, 0, 0, .25);
+      box-shadow: none;
       z-index: 5;
     }
 
-    body.light-mode #sidebar {
+    body.light-mode #profile-rail {
       background: linear-gradient(180deg, rgba(255, 255, 255, .86), rgba(244, 248, 255, .82));
     }
 
@@ -93,7 +99,147 @@
       background: linear-gradient(135deg, var(--primary), var(--primary-2));
       box-shadow: 0 16px 30px rgba(90, 117, 255, .35);
       margin-bottom: 14px;
+      overflow: hidden;
     }
+
+    #brand-badge img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .sidebar-nav {
+      width: 100%;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 0;
+      scrollbar-width: none;
+      margin-top: auto;
+      flex: 0 1 auto;
+      max-height: calc(100% - 116px);
+    }
+
+    .sidebar-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    #profile-rail .tool-btn {
+      color: #667085;
+      border-radius: 10px;
+    }
+
+    #profile-rail .tool-btn:hover,
+    #profile-rail .tool-btn.active {
+      color: #fff;
+      background: #1767d9;
+      box-shadow: none;
+    }
+
+    #app-topbar {
+      grid-column: 1 / 4;
+      grid-row: 1;
+      height: var(--topbar);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px 0 14px;
+      background: #fff;
+      color: #1c2b44;
+      border-bottom: 1px solid #e5e7eb;
+      z-index: 8;
+      font-size: var(--app-font-size);
+      -webkit-app-region: drag;
+    }
+
+    .topbar-brand {
+      font-weight: 700;
+      color: #1767df;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-brand img { width: 24px; height: 24px; border-radius: 6px; }
+
+    .topbar-actions { position: relative; margin-right: 138px; display: flex; align-items: center; gap: 6px; -webkit-app-region: no-drag; }
+    .topbar-quote { height: 32px; padding: 0 14px; border: 1px solid #d8dee8; border-radius: 8px; background: #fff; color: #1767d9; font-weight: 700; cursor: pointer; }
+    .topbar-quote:hover, .topbar-quote.active { color: #fff; border-color: #1767d9; background: #1767d9; }
+
+    .topbar-more {
+      width: 36px;
+      height: 34px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #334155;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .topbar-more:hover,
+    .topbar-more[aria-expanded="true"] { background: #eef2f7; }
+
+    #app-more-menu {
+      position: fixed;
+      right: 12px;
+      top: 44px;
+      width: 268px;
+      padding: 14px;
+      border: 1px solid #d8dee8;
+      border-radius: 12px;
+      background: #fff;
+      color: #1f2937;
+      box-shadow: 0 18px 44px rgba(15, 23, 42, .18);
+      z-index: 100;
+    }
+
+    #app-more-menu[hidden] { display: none; }
+    .font-control-head, .font-control-limits { display: flex; justify-content: space-between; }
+    .font-control-head { margin-bottom: 10px; font-size: 13px; font-weight: 600; }
+    .font-control-limits { margin-top: 4px; color: #64748b; font-size: 10px; }
+    #font-size-range { width: 100%; accent-color: #3b82f6; }
+
+    body { font-size: var(--app-font-size); }
+
+    /* Deplao-inspired light application surfaces */
+    .overlay {
+      background: rgba(15, 23, 42, .28);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    .panel-box,
+    .modal-box,
+    body.light-mode .panel-box,
+    body.light-mode .modal-box {
+      border-radius: 12px;
+      padding: 20px;
+      color: #1f2937;
+      background: #fff;
+      border: 1px solid #dce2ea;
+      box-shadow: 0 18px 44px rgba(15, 23, 42, .18);
+    }
+
+    .panel-head {
+      margin: -20px -20px 16px;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e9f0;
+      background: #fff;
+    }
+
+    .panel-title { font-size: 18px; color: #1f2937; }
+    .card { border-radius: 10px; border-color: #e1e6ee; background: #fff; box-shadow: none; }
+    .modal-input, .modal-select, .modal-textarea { border-radius: 8px; background: #fff; color: #1f2937; border-color: #d8dee8; }
+    .modal-btn { min-height: 38px; border-radius: 8px; box-shadow: none; }
+    .modal-btn.save { background: #1767d9; border-color: #1767d9; }
+    .modal-btn.save:hover { background: #0f57be; }
+    .modal-btn.cancel { background: #fff; color: #344054; border: 1px solid #d8dee8; }
+    .modal-btn.warn { background: #fff; color: #d92d45; border: 1px solid #ef5267; }
 
     #profiles-list {
       display: flex;
@@ -104,6 +250,8 @@
       overflow-y: auto;
       scrollbar-width: none;
       padding-bottom: 8px;
+      flex: 0 1 auto;
+      max-height: 42%;
     }
 
     #profiles-list::-webkit-scrollbar {
@@ -227,9 +375,13 @@
 
     #btn-add-profile {
       margin-top: 10px;
-      border: 1.5px dashed rgba(255, 255, 255, .2);
-      background: rgba(255, 255, 255, .04);
+      border: 1.5px dashed #98a2b3;
+      background: #fff;
+      color: #1767d9;
+      border-radius: 50%;
+      box-shadow: none;
     }
+    #btn-add-profile svg { width: 22px; height: 22px; stroke: #1767d9; stroke-width: 2.4; }
 
     #tools-overlay {
       display: none;
@@ -420,7 +572,10 @@
     .overlay {
       display: none;
       position: fixed;
-      inset: 0;
+      left: var(--sidebar);
+      top: var(--topbar);
+      right: 0;
+      bottom: 0;
       z-index: 99;
       background: rgba(3, 8, 17, .62);
       backdrop-filter: blur(14px);
@@ -462,6 +617,26 @@
       width: 700px;
     }
 
+    .profile-btn::after {
+      content: '';
+      position: absolute;
+      right: 1px;
+      bottom: 1px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #f59e0b;
+      border: 2px solid #fff;
+      z-index: 2;
+    }
+
+    .profile-btn[data-connection-state="online"]::after { background: #22a559; }
+    .profile-btn[data-connection-state="error"]::after { background: #d92d45; }
+
+    .panel-box {
+      overflow: hidden;
+    }
+
     body.light-mode .modal-box,
     body.light-mode .panel-box {
       background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(246, 249, 255, .94));
@@ -483,6 +658,22 @@
     .panel-title,
     .section-title {
       margin: 0;
+    }
+
+    .panel-head {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      flex: 0 0 auto;
+      padding-bottom: 4px;
+      background: inherit;
+    }
+
+    .panel-body {
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 4px;
     }
 
     .panel-title {
@@ -528,6 +719,62 @@
     body.light-mode .modal-select option {
       background: #fff;
       color: #0f172a;
+    }
+
+    .group-filter-bar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(190px, .65fr) auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 12px;
+    }
+
+    .group-filter-bar .modal-input,
+    .group-filter-bar .modal-select {
+      margin-top: 0;
+    }
+    .filter-row { display: grid; grid-template-columns: minmax(220px, 1.4fr) minmax(150px, .7fr) minmax(190px, 1fr); gap: 12px; }
+    .filter-row .modal-input, .filter-row .modal-select { margin-top: 0; }
+
+    .group-results {
+      min-height: 180px;
+      max-height: 360px;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      scrollbar-gutter: stable;
+      overscroll-behavior: contain;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .group-results::-webkit-scrollbar { width: 12px; }
+    .group-results::-webkit-scrollbar-track { background: #eef2f7; border-radius: 0 14px 14px 0; }
+    .group-results::-webkit-scrollbar-thumb { background: #98a2b3; border: 3px solid #eef2f7; border-radius: 999px; }
+    #zalo-users-overlay .panel-box, #zalo-groups-overlay .panel-box { height: min(90vh, 900px); display: flex; flex-direction: column; overflow: hidden; }
+    #zalo-users-overlay .panel-body { min-height: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #zalo-users-results { min-height: 180px; max-height: none; flex: 1 1 0; }
+    #zalo-groups-results { height: clamp(220px, 36vh, 460px); max-height: none; flex: 0 0 auto; }
+
+    .group-result-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .group-result-row:last-child { border-bottom: 0; }
+    .group-result-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .group-result-row input { width: 17px; height: 17px; accent-color: var(--primary); }
+    .group-action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .group-action-config { margin-top: 12px; }
+    .group-action-config .modal-textarea { margin-top: 12px; }
+    .group-action-log { max-height: 150px; overflow: auto; margin-top: 12px; }
+
+    @media (max-width: 700px) {
+      .group-filter-bar { grid-template-columns: 1fr; }
     }
 
     .modal-textarea {
@@ -820,51 +1067,142 @@
         grid-template-columns: repeat(3, 1fr);
       }
     }
+    #crm-utility-panel {
+      grid-column: 3;
+      grid-row: 2;
+      min-width: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #f7f8fb;
+      color: #202939;
+      border-left: 1px solid #dce2ea;
+      z-index: 6;
+      overflow: hidden;
+    }
+    #crm-utility-panel.collapsed { display: none; }
+    .utility-head { height: 48px; flex: 0 0 48px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; background: #fff; border-bottom: 1px solid #e5e9f0; }
+    .utility-head strong { font-size: 14px; }
+    .utility-context { padding: 9px 12px; background: #eef5ff; border-bottom: 1px solid #d6e5fb; font-size: 12px; color: #475467; }
+    .utility-context b { color: #1767d9; }
+    .crm-connect { padding: 10px 12px; border-bottom: 1px solid #dfe4eb; background: #fff; }
+    .crm-connect-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .crm-connect-grid .wide { grid-column: 1 / -1; }
+    .crm-connected-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+    .crm-dot { width: 8px; height: 8px; border-radius: 50%; background: #22a75a; display: inline-block; margin-right: 5px; }
+    .utility-pane { display: none; min-height: 0; flex: 1; overflow-y: auto; padding: 12px; }
+    .utility-pane.active { display: block; }
+    .utility-label { display: block; margin: 12px 0 6px; color: #667085; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .quote-paper-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .quote-paper { border: 1px solid #dfe4eb; border-radius: 8px; background: #fff; padding: 9px; text-align: left; cursor: pointer; color: #1f2937; }
+    .quote-paper:last-child { grid-column: 1 / -1; }
+    .quote-paper.active { border-color: #2775df; background: #eff6ff; box-shadow: inset 0 0 0 1px #2775df; }
+    .quote-paper span { display: block; color: #7b8495; font-size: 11px; margin-top: 2px; }
+    .quote-toggle { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; }
+    .quote-result { margin-top: 12px; padding: 10px; border: 1px solid #e0e4ea; border-radius: 8px; background: #fff; }
+    .quote-result-row { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; font-size: 12px; color: #667085; }
+    .quote-result-row strong { color: #1f2937; }
+    .quote-result-row.total { border-top: 1px dashed #d9dee6; margin-top: 4px; padding-top: 10px; font-weight: 700; }
+    .utility-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px; }
+    .utility-status { min-height: 18px; margin-top: 8px; color: #1767d9; font-size: 12px; }
+    .mapping-card { padding: 11px; border: 1px solid #dfe4eb; border-radius: 8px; background: #fff; margin-bottom: 10px; }
+    .mapping-card h4 { margin: 0 0 5px; font-size: 13px; }
+    .mapping-card p { margin: 3px 0; color: #667085; font-size: 12px; overflow-wrap: anywhere; }
+    .mapping-state { display: inline-flex; padding: 3px 7px; border-radius: 999px; background: #fff5df; color: #946200; font-size: 11px; font-weight: 700; }
+    .mapping-state.linked { background: #eaf8ef; color: #18733b; }
+    .crm-order-list { display: flex; flex-direction: column; gap: 7px; margin-top: 8px; }
+    .crm-order-row { width: 100%; border: 1px solid #dfe4eb; border-radius: 8px; padding: 9px; background: #fff; text-align: left; color: #202939; cursor: pointer; }
+    .crm-order-row strong, .crm-order-row span { display: block; }
+    .crm-order-row span { color: #667085; font-size: 11px; margin-top: 3px; }
+    .compact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .utility-tabs { flex: 0 0 58px; display: grid; grid-template-columns: repeat(3, 1fr); background: #fff; border-top: 1px solid #dfe4eb; }
+    .utility-tab { border: 0; background: transparent; color: #667085; cursor: pointer; font: inherit; font-size: 10px; font-weight: 700; padding: 7px 3px; }
+    .utility-tab svg { display: block; width: 18px; height: 18px; margin: 0 auto 3px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+    .utility-tab.active { color: #1767d9; box-shadow: inset 0 2px #1767d9; }
+    @media (max-width: 1080px) {
+      #app-shell { grid-template-columns: var(--profile-rail) 1fr var(--utility-panel-width, 0px); }
+      .filter-row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 
 <body class="dark-mode">
   <div id="app-shell">
-    <div id="sidebar">
-      <div id="brand-badge">9M</div>
+    <div id="profile-rail">
       <div id="profiles-list"></div>
-      <button class="profile-btn" id="btn-add-profile" title="Thêm tài khoản">
+      <button class="profile-btn" id="btn-add-profile" title="Thêm nick Zalo" aria-label="Thêm nick Zalo">
         <svg viewBox="0 0 24 24">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
       </button>
-      <div class="sidebar-spacer"></div>
-      <button class="tool-btn launcher" id="btn-tools-launcher" title="Mở bảng công cụ">
-        <svg viewBox="0 0 24 24">
-          <path d="M4 4h6v6H4z"></path>
-          <path d="M14 4h6v6h-6z"></path>
-          <path d="M4 14h6v6H4z"></path>
-          <path d="M14 14h6v6h-6z"></path>
-        </svg>
-      </button>
-
+      <nav class="sidebar-nav" aria-label="Công cụ Nhà Yến Zalo">
+        <button class="tool-btn nav-tool" data-tool-action="zalo-users" title="Người dùng Zalo" aria-label="Người dùng Zalo"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21v-2a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v2"/><path d="M17 11a4 4 0 0 1 5 4v2"/></svg></button>
+        <button class="tool-btn nav-tool" data-tool-action="zalo-groups" title="Nhóm Zalo" aria-label="Nhóm Zalo"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20v-2a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2"/><path d="M14 14h2a4 4 0 0 1 4 4v2"/></svg></button>
+        <button class="tool-btn nav-tool" data-tool-action="quick-replies" title="Tin nhắn nhanh" aria-label="Tin nhắn nhanh"><svg viewBox="0 0 24 24"><path d="M21 15a3 3 0 0 1-3 3H8l-5 3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3z"/><path d="M8 8h8M8 12h5"/></svg></button>
+        <button class="tool-btn nav-tool" data-tool-action="update" title="Cập nhật" aria-label="Cập nhật"><svg viewBox="0 0 24 24"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M6.1 9a7 7 0 0 1 11.7-2.6L20 11M4 13l2.2 4.6A7 7 0 0 0 17.9 15"/></svg></button>
+        <button class="tool-btn nav-tool" data-tool-action="remote-control" title="Remote Control" aria-label="Remote Control"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="m9 10 2 2 4-4"/></svg></button>
+      </nav>
     </div>
+    <header id="app-topbar">
+      <span class="topbar-brand"><img src="brand-logo.png" alt="">Nhà Yến Zalo</span>
+      <div class="topbar-actions">
+        <button id="quick-replies-topbar" class="topbar-quote" type="button" title="Mở tin nhắn nhanh" aria-label="Mở tin nhắn nhanh" aria-expanded="false">Tin nhắn nhanh</button>
+        <button id="send-video-topbar" class="topbar-quote" type="button" title="Chọn video cho hội thoại hiện tại" aria-label="Gửi video">Gửi video</button>
+        <button id="quote-panel-toggle" class="topbar-quote" type="button" title="Mở báo giá" aria-label="Mở báo giá" aria-expanded="false">Báo giá</button>
+        <button id="app-more-button" class="topbar-more" type="button" title="Tùy chọn" aria-label="Mở tùy chọn" aria-expanded="false" aria-controls="app-more-menu">•••</button>
+        <div id="app-more-menu" role="dialog" aria-label="Tùy chọn hiển thị" hidden>
+          <div class="font-control-head"><span>Cỡ chữ</span><output id="font-size-value" for="font-size-range">16px</output></div>
+          <input id="font-size-range" type="range" min="12" max="24" step="1" value="16" aria-label="Cỡ chữ ứng dụng">
+          <div class="font-control-limits"><span>12px</span><span>24px</span></div>
+        </div>
+      </div>
+    </header>
+    <aside id="crm-utility-panel" class="collapsed" aria-label="Báo giá Nhà Yến">
+      <div class="utility-head"><strong>Báo giá thiệp cưới</strong><button id="utility-panel-hide" class="modal-btn cancel" type="button" aria-label="Đóng báo giá">Đóng</button></div>
+      <div id="utility-context" class="utility-context">Chọn một nick và mở cuộc trò chuyện Zalo.</div>
+      <section id="utility-pane-quote" class="utility-pane active" aria-labelledby="utility-tab-quote">
+        <span class="utility-label">Loại giấy</span>
+        <div class="quote-paper-grid">
+          <button class="quote-paper active" type="button" data-paper-type="nhunu"><b>Ánh nhũ thơm</b><span>Lấp lánh · nước hoa</span></button>
+          <button class="quote-paper" type="button" data-paper-type="standard"><b>Tiêu chuẩn</b><span>Không mùi</span></button>
+          <button class="quote-paper" type="button" data-paper-type="gap3in1"><b>Gập 3in1</b><span>1 tờ gập 3 · có ngăn đựng tiền</span></button>
+        </div>
+        <label class="utility-label" for="quote-quantity">Số lượng (bộ)</label>
+        <input id="quote-quantity" class="modal-input" type="number" min="50" step="10" placeholder="Tối thiểu 50 bộ">
+        <label class="quote-toggle"><input id="quote-emboss" type="checkbox"> Ép kim / dập nổi</label>
+        <div id="quote-emboss-fields" hidden><label class="utility-label" for="quote-emboss-positions">Số vị trí</label><input id="quote-emboss-positions" class="modal-input" type="number" min="1" value="1"></div>
+        <div class="quote-result" aria-live="polite">
+          <div class="quote-result-row"><span>Đơn giá</span><strong id="quote-unit-price">—</strong></div>
+          <div class="quote-result-row"><span>Tiền giấy</span><strong id="quote-paper-cost">—</strong></div>
+          <div class="quote-result-row"><span>Ép kim</span><strong id="quote-emboss-cost">—</strong></div>
+          <div class="quote-result-row total"><span>Tổng chi phí</span><strong id="quote-total">—</strong></div>
+          <div class="quote-result-row"><span>Giá thành</span><strong id="quote-average">—</strong></div>
+        </div>
+        <div class="utility-actions"><button id="quote-insert" class="modal-btn save" type="button" disabled>Chèn vào ô soạn tin</button><button id="quote-copy" class="modal-btn cancel" type="button" disabled>Copy</button></div>
+        <div id="quote-status" class="utility-status" role="status"></div>
+      </section>
+    </aside>
   </div>
 
-  <div id="tools-overlay" aria-hidden="true">
+  <div id="tools-overlay" aria-hidden="true" hidden>
     <div class="tools-scrim" data-tools-close="true"></div>
-    <div class="tools-panel" role="dialog" aria-label="Bảng công cụ 9Meta">
+    <div class="tools-panel" role="dialog" aria-label="Công cụ cũ">
       <div class="tools-head">
         <div>
-          <h3 class="tools-title">Bảng công cụ 9Meta</h3>
-          <p class="tools-subtitle">9 chức năng chính trong một launcher gọn gàng.</p>
+          <h3 class="tools-title">Công cụ cũ</h3>
+          <p class="tools-subtitle">10 chức năng chính trong một launcher gọn gàng.</p>
         </div>
         <button class="modal-btn cancel" id="tools-close">Đóng</button>
       </div>
       <div class="tools-grid">
-        <button class="tool-tile" data-tool-action="dashboard"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
+        <button class="tool-tile" data-legacy-action="dashboard"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
               <path d="M3 13h8V3H3z"></path>
               <path d="M13 21h8v-6h-8z"></path>
               <path d="M13 10h8V3h-8z"></path>
               <path d="M3 21h8v-4H3z"></path>
             </svg></span><strong>Dashboard</strong><span>Thống kê hoạt động</span></button>
-        <button class="tool-tile" data-tool-action="workspaces"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
+        <button class="tool-tile" data-legacy-action="workspaces"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
               <path d="M3 7l9-4 9 4-9 4-9-4z"></path>
               <path d="M3 12l9 4 9-4"></path>
               <path d="M3 17l9 4 9-4"></path>
@@ -873,7 +1211,7 @@
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            </svg></span><strong>CRM mini</strong><span>Quản lý contact</span></button>
+            </svg></span><strong>Danh bạ cũ</strong><span>Không còn sử dụng</span></button>
         <button class="tool-tile" data-tool-action="campaigns"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
               <path d="M3 11l18-5v12L3 13z"></path>
               <path d="M11 13.5V19a2 2 0 0 1-2 2H7"></path>
@@ -884,12 +1222,18 @@
               <path d="M2 12h4"></path>
               <path d="M18 12h4"></path>
               <circle cx="12" cy="12" r="3"></circle>
-            </svg></span><strong>AI Rewrite</strong><span>Viết lại tin nhắn</span></button>
+            </svg></span><strong>Soạn thảo cũ</strong><span>Không còn sử dụng</span></button>
         <button class="tool-tile" data-tool-action="quick-replies"><span class="tool-tile-icon"><svg
               viewBox="0 0 24 24">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               <line x1="9" y1="10" x2="15" y2="10"></line>
             </svg></span><strong>Tin mẫu</strong><span>Quick replies /1 /2</span></button>
+        <button class="tool-tile" data-tool-action="zalo-groups"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
+              <circle cx="8" cy="8" r="3"></circle>
+              <circle cx="17" cy="9" r="2.5"></circle>
+              <path d="M2 20v-2a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2"></path>
+              <path d="M14 14h2a4 4 0 0 1 4 4v2"></path>
+            </svg></span><strong>Xuất nhóm Zalo</strong><span>Quét profile đang mở</span></button>
         <button class="tool-tile" data-tool-action="update"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
               <path d="M21 2v6h-6"></path>
               <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
@@ -936,6 +1280,82 @@
             <polyline points="23 4 23 10 17 10"></polyline>
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
           </svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="zalo-groups-overlay" class="overlay">
+    <div class="panel-box wide">
+      <div class="panel-head">
+        <h3 class="panel-title">👥 Xuất danh sách nhóm Zalo</h3><button class="modal-btn cancel"
+          data-close="zalo-groups-overlay">Đóng</button>
+      </div>
+      <label class="download-meta" for="zalo-groups-profile-select">Nick Zalo thực hiện</label>
+      <select id="zalo-groups-profile-select" class="modal-select"></select>
+      <p id="zalo-groups-profile" class="download-meta">Chọn nick Zalo để bắt đầu.</p>
+      <div class="card mb-12">
+        <div class="section-head mb-12">
+          <h4 class="section-title">Tiến độ</h4><span id="zalo-groups-status" class="pill">Chưa chạy</span>
+        </div>
+        <div id="zalo-groups-progress" class="muted">Chưa có dữ liệu.</div>
+      </div>
+      <div id="zalo-groups-errors" class="list-scroll mb-12" style="max-height:180px;"></div>
+      <div id="zalo-groups-browser" hidden>
+        <div class="group-filter-bar">
+          <input id="zalo-groups-search" class="modal-input" type="search" aria-label="Tìm theo tên nhóm"
+            placeholder="Tìm theo tên nhóm, ví dụ: đang giao">
+          <select id="zalo-groups-sort" class="modal-select" aria-label="Sắp xếp danh sách nhóm">
+            <option value="name-asc">Tên nhóm: A → Z</option>
+            <option value="name-desc">Tên nhóm: Z → A</option>
+            <option value="created-asc">Nhóm cũ nhất trước</option>
+            <option value="created-desc">Nhóm mới nhất trước</option>
+            <option value="members-asc">Thành viên: ít → nhiều</option>
+            <option value="members-desc">Thành viên: nhiều → ít</option>
+            <option value="source">Thứ tự gốc từ Zalo</option>
+          </select>
+          <button id="zalo-groups-clear-filter" class="modal-btn cancel">Xóa lọc</button>
+        </div>
+        <div class="section-head mb-12">
+          <label><input id="zalo-groups-select-visible" type="checkbox"> Chọn các nhóm đang hiển thị</label>
+          <span id="zalo-groups-result-count" class="muted"></span>
+        </div>
+        <div id="zalo-groups-results" class="group-results mb-12" role="list"></div>
+        <div class="group-action-buttons">
+          <button id="zalo-groups-send-open" class="modal-btn save">Gửi tin nhóm đã chọn</button>
+          <button id="zalo-groups-leave-open" class="modal-btn warn">Rời nhóm đã chọn</button>
+        </div>
+        <div id="zalo-groups-action-panel" class="card group-action-config" hidden>
+          <div class="section-head">
+            <h4 id="zalo-groups-action-title" class="section-title"></h4>
+            <button id="zalo-groups-action-close" class="modal-btn cancel">Đóng</button>
+          </div>
+          <p id="zalo-groups-action-summary" class="muted"></p>
+          <div id="zalo-groups-send-config">
+            <textarea id="zalo-groups-message" class="modal-textarea" maxlength="2000"
+              placeholder="Nhập nội dung gửi vào các nhóm đã chọn"></textarea>
+            <label class="quote-toggle"><input id="zalo-groups-message-consent" type="checkbox"> Tôi xác nhận các nhóm này đã đồng ý nhận tin.</label>
+            <div class="grid-2">
+              <label class="muted">Nghỉ tối thiểu (giây)<input id="zalo-groups-delay-min" class="modal-input" type="number" min="8" max="120" value="8"></label>
+              <label class="muted">Nghỉ tối đa (giây)<input id="zalo-groups-delay-max" class="modal-input" type="number" min="8" max="120" value="20"></label>
+            </div>
+          </div>
+          <div id="zalo-groups-leave-config" hidden>
+            <p class="muted">Thao tác không thể hoàn tác. Nhập <strong>ROI NHOM</strong> để xác nhận.</p>
+            <p class="muted">Chính sách: nghỉ 5–10 giây mỗi nhóm, nghỉ 1–2 phút sau mỗi 5 nhóm và tối đa 1.000 nhóm/ngày/profile.</p>
+            <input id="zalo-groups-leave-confirm" class="modal-input" autocomplete="off" placeholder="ROI NHOM">
+          </div>
+          <div id="zalo-groups-action-progress" class="muted mt-16" aria-live="polite">Chưa chạy.</div>
+          <div id="zalo-groups-action-log" class="group-action-log"></div>
+          <div class="group-action-buttons">
+            <button id="zalo-groups-action-run" class="modal-btn save">Bắt đầu</button>
+            <button id="zalo-groups-action-stop" class="modal-btn cancel" disabled>Dừng</button>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <button id="zalo-groups-start" class="modal-btn save">Quét nhóm</button>
+        <button id="zalo-groups-cancel" class="modal-btn cancel" disabled>Dừng</button>
+        <button id="zalo-groups-save" class="modal-btn save" disabled>Lưu TXT</button>
       </div>
     </div>
   </div>
@@ -989,7 +1409,7 @@
   <div id="crm-overlay" class="overlay">
     <div class="panel-box wide">
       <div class="panel-head">
-        <h3 class="panel-title">👥 CRM mini theo profile</h3><button class="modal-btn cancel"
+        <h3 class="panel-title">👥 Danh bạ cũ theo profile</h3><button class="modal-btn cancel"
           data-close="crm-overlay">Đóng</button>
       </div>
       <div class="grid-2">
@@ -1035,12 +1455,12 @@
   <div id="campaign-overlay" class="overlay">
     <div class="panel-box wide">
       <div class="panel-head">
-        <h3 class="panel-title">📣 Campaign mini</h3><button class="modal-btn cancel"
+        <h3 class="panel-title">Gửi tin cá nhân</h3><button class="modal-btn cancel"
           data-close="campaign-overlay">Đóng</button>
       </div>
       <div class="grid-2">
         <div class="card">
-          <h4 class="section-title mb-12">Tạo chiến dịch Zalo</h4>
+          <h4 class="section-title mb-12">Soạn nội dung gửi</h4>
           <div class="chip-row mb-12">
             <span class="chip success">Chỉ áp dụng Zalo</span>
             <span class="chip hot">Gửi qua nhiều tài khoản Zalo</span>
@@ -1137,14 +1557,59 @@
   <div id="quick-replies-overlay" class="overlay">
     <div class="panel-box mid">
       <div class="panel-head">
-        <h3 class="panel-title">💬 Tin nhắn mẫu</h3><button class="modal-btn cancel"
+        <h3 class="panel-title">💬 Tin nhắn nhanh</h3><button class="modal-btn cancel"
           data-close="quick-replies-overlay">Đóng</button>
       </div>
-      <p class="download-meta">Nhập <code>/1</code>, <code>/2</code> ... trong ô chat để chèn và gửi mẫu.</p>
+      <p class="download-meta">Gõ đúng <code>/từkhóa</code> trong ô chat để chèn mẫu. Nội dung chỉ được gửi khi anh nhấn Enter.</p>
       <div id="quick-replies-list" class="list-scroll mb-16"></div>
+      <div class="filter-row mt-16"><input id="quick-reply-keyword" class="modal-input" placeholder="Từ khóa, ví dụ: baogia" aria-label="Từ khóa tin nhắn nhanh"><button class="modal-btn cancel" id="quick-reply-image">Chọn ảnh</button></div>
+      <p id="quick-reply-image-status" class="download-meta">Không kèm ảnh.</p>
       <div class="row mt-16"><textarea id="quick-reply-input" class="modal-textarea"
-          placeholder="Nhập nội dung quick reply mới" style="min-height:72px;margin:0;"></textarea><button
-          class="modal-btn save" id="quick-reply-add">Thêm</button></div>
+          placeholder="Nhập nội dung tin nhắn mẫu" style="min-height:72px;margin:0;"></textarea><button
+          class="modal-btn save" id="quick-reply-add">Thêm mẫu</button></div>
+    </div>
+  </div>
+
+  <div id="zalo-users-overlay" class="overlay">
+    <div class="panel-box wide">
+      <div class="panel-head"><h3 class="panel-title">Người dùng Zalo</h3><button class="modal-btn cancel" data-close="zalo-users-overlay">Đóng</button></div>
+      <div class="panel-body"><label class="download-meta" for="zalo-users-profile-select">Nick Zalo thực hiện</label><select id="zalo-users-profile-select" class="modal-select"></select><p id="zalo-users-progress" class="download-meta">Chọn nick rồi quét danh sách bạn bè.</p><div class="filter-row"><input id="zalo-users-search" class="modal-input" type="search" placeholder="Tìm theo tên hoặc userId"><select id="zalo-users-sort" class="modal-select"><option value="name-asc">Tên A → Z</option><option value="name-desc">Tên Z → A</option></select><select id="zalo-users-inactivity" class="modal-select" aria-label="Lọc theo số ngày im lặng"><option value="0">Tất cả thời gian</option><option value="30">Im lặng từ 30 ngày</option><option value="60">Im lặng từ 60 ngày</option><option value="90">Im lặng từ 90 ngày</option><option value="180">Im lặng từ 180 ngày</option><option value="365">Im lặng từ 365 ngày</option></select></div><p class="download-meta">Khi lọc ngày im lặng, người có thời gian tương tác “Không rõ” sẽ tự động bị loại để tránh hủy nhầm.</p><label class="download-meta"><input id="zalo-users-select-all" type="checkbox"> Chọn tất cả đang hiển thị</label><div id="zalo-users-results" class="group-results mb-12"><div class="empty-state">Chưa có dữ liệu.</div></div><p id="zalo-users-action-status" class="download-meta" role="status" aria-live="polite"></p><div class="row"><button id="zalo-users-scan" class="modal-btn save">Quét người dùng</button><button id="zalo-users-send-open" class="modal-btn save" disabled>Gửi tin đã chọn</button><button id="zalo-users-unfriend-open" class="modal-btn warn" disabled>Hủy kết bạn</button><button id="zalo-users-probe" class="modal-btn cancel">Kiểm tra tương thích</button><button id="zalo-users-record" class="modal-btn cancel">Ghi nhận thao tác</button></div></div>
+    </div>
+  </div>
+
+  <div id="personal-messages-overlay" class="overlay">
+    <div class="panel-box wide">
+      <div class="panel-head"><h3 class="panel-title">Gửi tin cá nhân</h3><button class="modal-btn cancel" data-close="personal-messages-overlay">Đóng</button></div>
+      <div class="panel-body"><p id="personal-message-summary" class="download-meta">Hãy quét và chọn người dùng trước.</p><textarea id="personal-message-text" class="modal-textarea" maxlength="2000" placeholder="Nội dung tin nhắn"></textarea><label class="quote-toggle"><input id="personal-message-consent" type="checkbox"> Tôi xác nhận người nhận đã đồng ý nhận tin.</label><div class="row"><label class="muted">Nghỉ từ <input id="personal-delay-min" class="modal-input" type="number" min="8" max="120" value="8"></label><label class="muted">đến <input id="personal-delay-max" class="modal-input" type="number" min="8" max="120" value="20"> giây</label></div><div id="personal-message-log" class="group-action-log"></div><div class="row mt-16"><button id="personal-message-run" class="modal-btn save">Bắt đầu gửi</button><button id="personal-message-stop" class="modal-btn cancel" disabled>Dừng</button></div></div>
+    </div>
+  </div>
+
+  <div id="group-messages-overlay" class="overlay">
+    <div class="panel-box wide">
+      <div class="panel-head"><h3 class="panel-title">Gửi tin nhóm</h3><button class="modal-btn cancel" data-close="group-messages-overlay">Đóng</button></div>
+      <div class="panel-body"><p id="group-message-summary" class="download-meta">Hãy quét và chọn nhóm trước.</p><textarea id="group-message-text" class="modal-textarea" maxlength="2000" placeholder="Nội dung tin nhắn nhóm"></textarea><label class="quote-toggle"><input id="group-message-consent" type="checkbox"> Tôi xác nhận các nhóm này đã đồng ý nhận tin.</label><div class="row"><label class="muted">Nghỉ từ <input id="group-message-delay-min" class="modal-input" type="number" min="8" max="120" value="8"></label><label class="muted">đến <input id="group-message-delay-max" class="modal-input" type="number" min="8" max="120" value="20"> giây</label></div><div id="group-message-log" class="group-action-log"></div><div class="row mt-16"><button id="group-message-run" class="modal-btn save">Bắt đầu gửi</button><button id="group-message-stop" class="modal-btn cancel" disabled>Dừng</button></div></div>
+    </div>
+  </div>
+
+  <div id="remote-control-overlay" class="overlay">
+    <div class="panel-box mid">
+      <div class="panel-head"><h3 class="panel-title">Remote Control</h3><button class="modal-btn cancel" data-close="remote-control-overlay">Đóng</button></div>
+      <div class="panel-body">
+        <p class="download-meta">Điều khiển toàn bộ Nhà Yến Zalo từ một PC khác trong cùng mạng LAN.</p>
+        <div id="remote-off-state" class="card">
+          <div class="section-head"><strong>Remote access • off</strong><span class="pill">Đã tắt</span></div>
+          <button id="remote-start" class="modal-btn save w-full mt-16">Bật Remote LAN</button>
+        </div>
+        <div id="remote-on-state" class="card" hidden>
+          <div class="section-head"><strong>Remote access • on</strong><span id="remote-reach" class="pill done"></span></div>
+          <img id="remote-qr" alt="QR truy cập Remote Control" style="display:block;width:280px;max-width:100%;margin:18px auto;border-radius:8px">
+          <label class="muted" for="remote-url">Liên kết truy cập</label>
+          <div class="row"><input id="remote-url" class="modal-input" readonly style="margin:8px 0"><button id="remote-copy" class="modal-btn cancel">Sao chép</button></div>
+          <p class="muted">Bất kỳ ai có liên kết này đều có thể điều khiển các chức năng được cho phép. Hãy dừng Remote khi dùng xong.</p>
+          <button id="remote-stop" class="modal-btn warn w-full">Dừng Remote Control</button>
+        </div>
+        <p id="remote-error" class="error-text" role="alert"></p>
+      </div>
     </div>
   </div>
 

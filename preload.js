@@ -13,6 +13,9 @@ contextBridge.exposeInMainWorld('messengerApp', {
   sendCurrentChatInfo: (info) => ipcRenderer.send('current-chat-info-extracted', info),
   sendRecentChats: (chats) => ipcRenderer.send('recent-chats-extracted', chats),
   sendTextToActiveChat: (message) => ipcRenderer.invoke('active-chat-send-text', message),
+  emitZaloGroupScanEvent: (payload) => ipcRenderer.send('zalo-group-scan:event', payload),
+  emitZaloUserScanEvent: (payload) => ipcRenderer.send('zalo-user-scan:event', payload),
+  pasteQuickReplyImage: (imagePath) => ipcRenderer.invoke('quick-reply:paste-image', imagePath),
 });
 
 const settings = ipcRenderer.sendSync('get-settings');
@@ -131,51 +134,30 @@ function runInjection(currentSettings) {
         if (window.__DepLaoShortcutsReady) return;
         window.__DepLaoShortcutsReady = true;
 
-        document.addEventListener('keydown', function(e) {
-          if (e.key !== 'Enter') return;
-          var replies = window.__DepLaoQuickReplies;
-          if (!replies || !replies.length) return;
-
-          var targetInput = e.target;
-          if (!targetInput) return;
-
-          var isEditable = targetInput.isContentEditable || targetInput.tagName === 'TEXTAREA' || targetInput.tagName === 'INPUT' || targetInput.getAttribute('contenteditable') === 'true' || targetInput.getAttribute('role') === 'textbox';
-          if (!isEditable) return;
-
-          var text = (targetInput.value !== undefined ? targetInput.value : (targetInput.innerText || targetInput.textContent || '')).trim();
-          var match = text.match(/^\\/([0-9]+)$/);
-          if (!match) return;
-
-          var idx = parseInt(match[1], 10) - 1;
-          if (idx < 0 || idx >= replies.length) return;
-
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-
-          // Clear the input and insert the template message
-          targetInput.focus();
-          document.execCommand('selectAll', false, null);
-          document.execCommand('insertText', false, replies[idx].message);
-          if (targetInput.value !== undefined) {
+        async function applyQuickReply(targetInput, reply) {
+          if (!targetInput || !reply || window.__DepLaoApplyingQuickReply) return;
+          window.__DepLaoApplyingQuickReply = true;
+          try {
+            targetInput.focus();
+            document.execCommand('selectAll', false, null);
+            document.execCommand('delete', false, null);
+            if (targetInput.value !== undefined) targetInput.value = '';
             targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-          }
-
-          // Trigger send after a short delay
-          setTimeout(function() {
-            var sendBtn = document.querySelector('[data-translate-title="STR_SEND"]') || document.querySelector('button[class*="send"]') || document.querySelector('.chat-input__send-btn') || document.querySelector('[aria-label="Gửi"]') || document.querySelector('[aria-label="Send"]');
-            if (sendBtn) {
-              sendBtn.click();
-            } else {
-              // Simulate Enter key to send
-              var enterEvent = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true });
-              targetInput.dispatchEvent(enterEvent);
+            if (reply.imagePath) {
+              await window.messengerApp.pasteQuickReplyImage(reply.imagePath);
+              await new Promise(function(resolve) { setTimeout(resolve, 450); });
             }
-          }, 100);
-        }, true);
+            targetInput.focus();
+            document.execCommand('insertText', false, String(reply.message || ''));
+            targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+          } finally {
+            setTimeout(function() { window.__DepLaoApplyingQuickReply = false; }, 100);
+          }
+        }
 
         // Also show a small hint when user types /
         document.addEventListener('input', function(e) {
+          if (window.__DepLaoApplyingQuickReply) return;
           var replies = window.__DepLaoQuickReplies;
           if (!replies || !replies.length) return;
           var targetInput = e.target;
@@ -186,8 +168,15 @@ function runInjection(currentSettings) {
 
           var text = (targetInput.value !== undefined ? targetInput.value : (targetInput.innerText || targetInput.textContent || '')).trim();
           var existingHint = document.getElementById('dep-lao-shortcut-hint');
+          var normalizedShortcut = text.replace(/^\\//, '').toLocaleLowerCase('vi');
+          var exactReply = replies.find(function(reply, index) { return String(reply.keyword || (index + 1)).toLocaleLowerCase('vi') === normalizedShortcut; });
+          if (/^\\/[^\\s/]+$/.test(text) && exactReply) {
+            if (existingHint) existingHint.remove();
+            applyQuickReply(targetInput, exactReply);
+            return;
+          }
 
-          if (text.match(/^\\/[0-9]*$/)) {
+          if (text.match(/^\\/[^\\s/]*$/)) {
             if (!existingHint) {
               existingHint = document.createElement('div');
               existingHint.id = 'dep-lao-shortcut-hint';
@@ -196,9 +185,9 @@ function runInjection(currentSettings) {
               if (inputContainer) { inputContainer.style.position = 'relative'; inputContainer.appendChild(existingHint); }
             }
             existingHint.innerHTML = '';
-            replies.forEach(function(r, i) {
+            replies.filter(function(r, i) { return String(r.keyword || (i + 1)).toLocaleLowerCase('vi').includes(normalizedShortcut); }).forEach(function(r, i) {
               var item = document.createElement('div');
-              var shortcut = '/' + (i + 1);
+              var shortcut = '/' + String(r.keyword || (i + 1));
               var isActive = text === shortcut;
               item.style.cssText = 'padding:8px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .15s;' + (isActive ? 'background:rgba(10,132,255,.2);' : '');
               item.innerHTML = '<span style="background:rgba(10,132,255,.3);color:#65b7ff;padding:3px 8px;border-radius:8px;font-size:12px;font-weight:700;font-family:monospace;flex-shrink:0;">' + shortcut + '</span><span style="font-size:13px;color:rgba(255,255,255,.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.message.length > 60 ? r.message.substring(0, 60) + '...' : r.message) + '</span>';
@@ -206,11 +195,8 @@ function runInjection(currentSettings) {
               item.onmouseleave = function() { item.style.background = isActive ? 'rgba(10,132,255,.2)' : ''; };
               item.onclick = function(ev) {
                 ev.preventDefault(); ev.stopPropagation();
-                targetInput.focus();
-                document.execCommand('selectAll', false, null);
-                document.execCommand('insertText', false, r.message);
-                if (targetInput.value !== undefined) targetInput.dispatchEvent(new Event('input', { bubbles: true }));
                 if (existingHint) existingHint.remove();
+                applyQuickReply(targetInput, r);
               };
               existingHint.appendChild(item);
             });
@@ -261,7 +247,13 @@ function runInjection(currentSettings) {
         var info = { name: '', platform: platform.toLowerCase() };
         try {
           if (isZalo) {
-            var chatNameEl = document.querySelector('.header-title') || document.querySelector('.title-name');
+            var candidates = Array.from(document.querySelectorAll('.header-title, .title-name, [class*="chat-header"] [class*="title"]'));
+            candidates = candidates.filter(function(el) {
+              var rect = el.getBoundingClientRect();
+              var text = (el.innerText || '').replace(/\s+/g, ' ').trim();
+              return rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.top < 170 && rect.left > 180 && text && !/^(Thông tin nhóm|Thành viên nhóm)$/i.test(text);
+            }).sort(function(a, b) { return a.getBoundingClientRect().left - b.getBoundingClientRect().left; });
+            var chatNameEl = candidates[0] || null;
             if (chatNameEl) info.name = (chatNameEl.innerText || '').replace(/\s+/g, ' ').trim();
           } else if (isMessenger) {
             var chatNameEl = document.querySelector('span[dir="auto"]');
@@ -287,16 +279,18 @@ function runInjection(currentSettings) {
         var info = { name: '', avatar: '' };
         try {
           if (isZalo) {
-            try { require('fs').writeFileSync('/Users/tiodev/Desktop/ZaloPre/zalo_dom.html', document.documentElement.outerHTML); } catch (e) {}
-            var nameEl = document.querySelector('.str-name') || document.querySelector('.header-title');
-            var avatarEl = document.querySelector('.nav__tabs__avatar img, .zavatar-img, .zavatar img, .avatar-img');
+            var nameEl = document.querySelector('#app-navigation .str-name, #app-navigation [class*="profile-name"], .nav__tabs__profile-name');
+            var avatarEl = document.querySelector('#app-navigation .zavatar img, #app-navigation [class*="avatar"] img, .nav__tabs__avatar img, .zavatar-img');
             if (!avatarEl) {
               var imgs = Array.from(document.querySelectorAll('img'));
-              avatarEl = imgs.find(img => img.src && (img.src.includes('ava') || img.src.includes('zavatar')));
-              if (!avatarEl && imgs.length > 0) avatarEl = imgs[0];
+              avatarEl = imgs.find(function(img) {
+                var rect = img.getBoundingClientRect();
+                var src = String(img.currentSrc || img.src || '');
+                return src && !/logo|icon|banner|ads?/i.test(src) && rect.left >= 0 && rect.left < 90 && rect.top >= 20 && rect.top < 180 && rect.width >= 28 && rect.width <= 72 && Math.abs(rect.width - rect.height) < 10;
+              });
             }
             if (nameEl) info.name = (nameEl.innerText || '').replace(/\s+/g, ' ').trim();
-            if (avatarEl) info.avatar = avatarEl.src;
+            if (avatarEl) info.avatar = avatarEl.currentSrc || avatarEl.src;
           } else if (isMessenger) {
             var titleEl = document.querySelector('title');
             if (titleEl && titleEl.innerText) {
@@ -328,6 +322,7 @@ function runInjection(currentSettings) {
           }
         } catch (e) { console.error('Extracted error', e); }
         if (info.name || info.avatar) {
+          info.kind = 'account-navigation';
           try { window.messengerApp.sendProfileInfo(info); } catch (e) { console.error('sendProfileInfo error', e); }
         }
       }
@@ -340,6 +335,20 @@ function runInjection(currentSettings) {
 }
 
 runInjection(settings);
+
+ipcRenderer.on('zalo-group-scan:start', (event, { scanId, script }) => {
+  webFrame.executeJavaScript(script).catch((error) => {
+    ipcRenderer.send('zalo-group-scan:event', { scanId, type: 'error', message: error.message || String(error) });
+  });
+});
+
+ipcRenderer.on('zalo-group-scan:cancel', (event, { script }) => {
+  webFrame.executeJavaScript(script).catch(() => {});
+});
+
+ipcRenderer.on('zalo-user-scan:start', (event, { scanId, script }) => {
+  webFrame.executeJavaScript(script).catch((error) => ipcRenderer.send('zalo-user-scan:event', { scanId, type: 'error', message: error.message || String(error) }));
+});
 
 ipcRenderer.on('update-block-settings', (event, newSettings) => {
   webFrame.executeJavaScript(`
