@@ -1,6 +1,6 @@
 {
   "name": "9meta",
-  "version": "2.5.9",
+  "version": "2.5.37",
   "description": "Nhà Yến Zalo - Quản lý nhiều tài khoản, người dùng và nhóm Zalo trên Desktop.",
   "main": "main.js",
   "scripts": {
@@ -20,11 +20,13 @@
       "preload.js",
       "renderer.js",
       "index.html",
+      "update-notice.html",
       "custom_style.css",
       "modules/**/*.js",
       "icon.ico",
       "icon.png",
       "brand-logo.png",
+      "assets/fonts/Quicksand-VariableFont_wght.ttf",
       "package.json"
     ],
     "win": {
@@ -44,6 +46,9 @@
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "Nhà Yến Zalo",
       "artifactName": "Nha-Yen-Zalo-Setup-${version}.${ext}"
+    },
+    "releaseInfo": {
+      "releaseNotes": "Pancake: sửa khối sản phẩm thẳng hàng cột, to số tiền cột Thành tiền, thu nhỏ nút xoá."
     },
     "publish": [
       {
