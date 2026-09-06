@@ -455,10 +455,61 @@ function loadWorkspaceIndex() {
 function getWorkspaceFile(id) { return path.join(WORKSPACES_DIR, id, 'data.json'); }
 function loadWorkspaceData(id) { return normalizeWorkspaceData(safeJsonRead(getWorkspaceFile(id), DEFAULT_WORKSPACE_DATA)); }
 function saveWorkspaceData(id, data) { safeJsonWrite(getWorkspaceFile(id), normalizeWorkspaceData(data)); }
+// Bo mau tin nhan nhanh nap san trong bo cai (assets/default-quick-replies).
+// Chi seed 1 lan khi cai moi (workspace con trong, chua co cot .qr-seeded). Anh di kem duoc
+// copy sang userData/quick-reply-images va imagePath tra ve duong dan tuyet doi may nguoi dung.
+function seedQuickRepliesFromBundle() {
+  try {
+    const bundleDir = path.join(__dirname, 'assets', 'default-quick-replies');
+    const bundlePath = path.join(bundleDir, 'default-quick-replies.json');
+    if (!fs.existsSync(bundlePath)) return [];
+    const raw = JSON.parse(fs.readFileSync(bundlePath, 'utf8'));
+    if (!Array.isArray(raw) || !raw.length) return [];
+    const imgDir = path.join(app.getPath('userData'), 'quick-reply-images');
+    ensureDir(imgDir);
+    const stamp = Date.now();
+    return raw.map((reply, i) => {
+      const next = { ...reply };
+      if (!next.id) next.id = `${stamp}-${i}`;
+      if (next.imagePath) {
+        const base = path.basename(String(next.imagePath));
+        const dest = path.join(imgDir, base);
+        try {
+          if (!fs.existsSync(dest)) {
+            const src = path.join(bundleDir, base);
+            if (fs.existsSync(src)) fs.writeFileSync(dest, fs.readFileSync(src));
+            next.imagePath = fs.existsSync(dest) ? dest : '';
+          } else {
+            next.imagePath = dest;
+          }
+        } catch { next.imagePath = ''; }
+      } else {
+        next.imagePath = '';
+      }
+      return next;
+    }).filter((r) => r.keyword || r.message);
+  } catch { return []; }
+}
 function getWorkspaceState() {
   const index = loadWorkspaceIndex();
   const data = loadWorkspaceData(index.currentId);
   if (!data.quickReplies.length && settings.quickReplies?.length) data.quickReplies = settings.quickReplies;
+  // Nap san mau khi cai moi: mo khoa xong, workspace van trong va chua seed lan nao.
+  if (!data.quickReplies.length && storeUnlocked) {
+    try {
+      const seededFlag = path.join(app.getPath('userData'), '.qr-seeded');
+      if (!fs.existsSync(seededFlag)) {
+        const seeded = seedQuickRepliesFromBundle();
+        try { fs.writeFileSync(seededFlag, String(seeded.length)); } catch {}
+        if (seeded.length) {
+          data.quickReplies = seeded;
+          saveWorkspaceData(index.currentId, data);
+          settings.quickReplies = seeded;
+          saveSettings(settings);
+        }
+      }
+    } catch {}
+  }
   return { ...index, data };
 }
 function persistWorkspaceState(data) {

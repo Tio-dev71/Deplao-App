@@ -1,6 +1,6 @@
 {
   "name": "9meta",
-  "version": "2.5.37",
+  "version": "2.5.38",
   "description": "Nhà Yến Zalo - Quản lý nhiều tài khoản, người dùng và nhóm Zalo trên Desktop.",
   "main": "main.js",
   "scripts": {
@@ -27,6 +27,7 @@
       "icon.png",
       "brand-logo.png",
       "assets/fonts/Quicksand-VariableFont_wght.ttf",
+      "assets/default-quick-replies/**/*",
       "package.json"
     ],
     "win": {
@@ -48,7 +49,7 @@
       "artifactName": "Nha-Yen-Zalo-Setup-${version}.${ext}"
     },
     "releaseInfo": {
-      "releaseNotes": "Pancake: sửa khối sản phẩm thẳng hàng cột, to số tiền cột Thành tiền, thu nhỏ nút xoá."
+      "releaseNotes": "Nạp sẵn 154 tin nhắn nhanh vào bộ cài; máy mới cài xong là có ngay (40 mẫu có ảnh)."
     },
     "publish": [
       {
