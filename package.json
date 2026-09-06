@@ -1,21 +1,37 @@
 {
   "name": "9meta",
-  "version": "1.8.13",
-  "description": "9Meta - Quản lý đa tài khoản Zalo, Messenger, Fanpage, Telegram, WhatsApp...",
+  "version": "2.5.38",
+  "description": "Nhà Yến Zalo - Quản lý nhiều tài khoản, người dùng và nhóm Zalo trên Desktop.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win",
-    "build:mac": "electron-builder --mac",
-    "build:portable": "electron-builder --win portable --x64"
+    "test": "node --test test/*.test.js",
+    "test:electron-unfriend": "electron test/electron-unfriend-detached-smoke.js",
+    "build": "electron-builder --win"
   },
   "build": {
-    "appId": "com.zalo.desktop",
-    "productName": "9Meta",
+    "appId": "com.nhayen.zalo",
+    "productName": "Nhà Yến Zalo",
     "directories": {
       "output": "dist"
     },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "update-notice.html",
+      "custom_style.css",
+      "modules/**/*.js",
+      "icon.ico",
+      "icon.png",
+      "brand-logo.png",
+      "assets/fonts/Quicksand-VariableFont_wght.ttf",
+      "assets/default-quick-replies/**/*",
+      "package.json"
+    ],
     "win": {
+      "icon": "icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -25,58 +41,24 @@
         }
       ]
     },
-    "mac": {
-      "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "universal"
-          ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "universal"
-          ]
-        }
-      ],
-      "icon": "icon.png",
-      "category": "public.app-category.social-networking"
-    },
-    "dmg": {
-      "title": "9Meta",
-      "artifactName": "9Meta-${version}-mac.${ext}"
-    },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "9Meta",
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "shortcutName": "Nhà Yến Zalo",
+      "artifactName": "Nha-Yen-Zalo-Setup-${version}.${ext}"
     },
-    "files": [
-      "main.js",
-      "preload.js",
-      "renderer.js",
-      "index.html",
-      "custom_style.css",
-      "icon.ico",
-      "icon.png",
-      "package.json"
-    ],
+    "releaseInfo": {
+      "releaseNotes": "Nạp sẵn 154 tin nhắn nhanh vào bộ cài; máy mới cài xong là có ngay (40 mẫu có ảnh)."
+    },
     "publish": [
       {
-        "provider": "generic",
-        "url": "https://api.tiodev.io.vn/updates"
+        "provider": "github",
+        "owner": "thaophamce",
+        "repo": "nhayen-zalo-updates"
       }
     ]
   },
-  "keywords": [
-    "9Meta",
-    "multi-account",
-    "desktop",
-    "electron"
-  ],
   "author": "Tiodev71",
   "license": "MIT",
   "devDependencies": {
@@ -84,6 +66,12 @@
     "electron-builder": "^24.13.3"
   },
   "dependencies": {
-    "electron-updater": "^6.8.3"
+    "cloudflared": "^0.7.3",
+    "electron-updater": "^6.8.3",
+    "qrcode": "^1.5.4",
+    "ws": "^8.18.3"
+  },
+  "allowScripts": {
+    "electron@29.4.6": true
   }
 }
