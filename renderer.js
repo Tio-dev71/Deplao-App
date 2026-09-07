@@ -778,11 +778,21 @@ async function searchPancakeProducts() {
   catch (error) { box.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`; box.hidden = false; return; }
   const normalize = (value) => stripDiacritics(value).toLowerCase().split(/\s+/).filter(Boolean);
   const queryTokens = normalize(query);
+  const queryNorm = queryTokens.join(' ');
   const matches = catalog.filter((product) => {
     const haystack = [product.product?.name, product.product?.keyword, product.keyword, product.display_id, product.name].map((value) => normalize(value).join(' ')).join(' ');
     return queryTokens.every((token) => haystack.includes(token));
   });
-  pancakeProducts = matches.slice(0, 30);
+  // Uu tien "Thiep Cuoi" len dau khi go "thiep cuoi": khop chinh xac -> bat dau bang -> chua o giua.
+  // Khong doi API, chi doi thu tu hien thi trong dropdown (giong anh yeu cau o anh 2).
+  const scored = matches.map((product, originalIndex) => {
+    const nameNorm = normalize(product.product?.name || product.display_id || product.name).join(' ');
+    let score = 2;
+    if (nameNorm === queryNorm) score = 0;
+    else if (nameNorm.startsWith(queryNorm)) score = 1;
+    return { product, score, originalIndex };
+  }).sort((a, b) => a.score - b.score || a.originalIndex - b.originalIndex);
+  pancakeProducts = scored.map((entry) => entry.product).slice(0, 30);
   box.innerHTML = pancakeProducts.length ? pancakeProducts.map((product, index) => `<button class="crm-order-row" data-product-index="${index}" type="button"><strong>${escapeHtml(product.product?.name || product.display_id || product.name)}</strong><span>${formatPancakeMoney(product.retail_price || product.price || 0)}</span></button>`).join('') : '<div class="empty-state">Không tìm thấy sản phẩm.</div>';
   box.hidden = false;
   box.querySelectorAll('[data-product-index]').forEach((button) => { button.onclick = () => {
@@ -1412,6 +1422,7 @@ function openModal(profileToEdit = null) {
   customUrlInput.value = profileToEdit?.customUrl || '';
   customUrlInput.style.display = (profileToEdit?.platform === 'custom') ? 'block' : 'none';
   document.getElementById('modal-delete').style.display = profileToEdit ? 'inline-flex' : 'none';
+  document.getElementById('modal-clear-cache').style.display = profileToEdit ? 'inline-flex' : 'none';
   updateAvatarPreview();
   openOverlay('modal-overlay');
   nameInput.focus();
@@ -2182,6 +2193,24 @@ document.addEventListener('keydown', (event) => {
 });
 document.getElementById('btn-add-profile').onclick = () => openModal();
 document.getElementById('modal-cancel').onclick = () => closeOverlay('modal-overlay');
+document.getElementById('modal-clear-cache').onclick = async () => {
+  if (!editingProfile) return;
+  const btn = document.getElementById('modal-clear-cache');
+  const prev = btn.textContent;
+  try {
+    btn.textContent = 'Đang dọn...';
+    btn.disabled = true;
+    const result = await ipcRenderer.invoke('profile-clear-cache', editingProfile.id);
+    if (!result || !result.ok) return alert(result?.message || 'Không dọn được cache. Thử đóng rồi mở lại Zalo.');
+    alert('Đã dọn cache cho tài khoản này (giữ đăng nhập). Trang sẽ tự tải lại.');
+    closeOverlay('modal-overlay');
+  } catch (e) {
+    alert(e.message || String(e));
+  } finally {
+    btn.textContent = prev;
+    btn.disabled = false;
+  }
+};
 document.getElementById('modal-delete').onclick = () => {
   if (!editingProfile) return;
   if (!confirm(`Xóa tài khoản ${editingProfile.name}?`)) return;
@@ -2805,6 +2834,16 @@ ipcRenderer.on('current-chat-info', (_, info) => {
 ipcRenderer.on('profile-connection-state', (_, payload) => {
   profileConnectionStates.set(payload.id, payload.state);
   renderSidebar();
+});
+// Chẩn đoán "không thấy hội thoại" — chỉ báo khi đúng nick đang mở, kèm hướng dẫn dọn cache.
+ipcRenderer.on('zalo-conversation-diag', (_, payload) => {
+  if (payload.profileId !== activeProfileId) return;
+  const mb = payload.cacheBytes > 0 ? Math.round(payload.cacheBytes / 1048576) : null;
+  const cacheLine = mb === null ? '' : `\nDung lượng cache Zalo hiện tại: ${mb} MB`;
+  const already = localStorage.getItem(`zalo-diag-${payload.profileId}`);
+  if (already && (Date.now() - Number(already)) < 60000) return; // chặn spam trong 60s
+  localStorage.setItem(`zalo-diag-${payload.profileId}`, String(Date.now()));
+  alert(`Nhà Yến Zalo không đếm được hội thoại nào trên nick này (trang đã tải xong).${cacheLine}\n\nHãy thử:\n1. Chỉnh sửa tài khoản → bấm "Dọn cache (giữ đăng nhập)".\n2. Hoặc chuột phải vào vùng Zalo → "Tải lại trang".\n\nNếu vẫn không thấy, có thể đang ở màn hình đăng nhập hoặc Zalo đổi giao diện — hãy báo lại kèm ảnh chụp.`);
 });
 ipcRenderer.on('remote-control-state', (_, state) => renderRemoteControl(state));
 ipcRenderer.on('zalo-user-scan:update', async (_, update) => {

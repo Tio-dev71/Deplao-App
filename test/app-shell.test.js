@@ -783,3 +783,63 @@ test('v2.5.33 Nhóm Zalo panel-body scroll, docked height 100%, sticky header op
   assert.match(renderer, /document\.body\.classList\.remove\('dark-mode'\)/);
   assert.match(renderer, /document\.body\.classList\.add\('light-mode'\)/);
 });
+
+test('v2.5.39 Zalo stability: backgroundThrottling off, bounded auto-reload on failure, cache clean keeps login', () => {
+  const main = fs.readFileSync(path.join(root, 'main.js'), 'utf8');
+  const renderer = fs.readFileSync(path.join(root, 'renderer.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  // P0: BrowserView cua Zalo khong bi Chromium giam timer khi an (nhan tin den khong duoc cham)
+  assert.match(main, /new BrowserView\(\{ webPreferences: \{[^}]*backgroundThrottling: false/);
+  // P1a: tu tai lai khi loi — chi main frame, bo qua ERR_ABORTED (-3), gioi han 3 lan, cach 5 giay, reset khi tai xong
+  assert.match(main, /did-fail-load', \(event, errorCode, errorDescription, validatedURL, isMainFrame\)/);
+  assert.match(main, /if \(!isMainFrame \|\| errorCode === -3\) return;/);
+  assert.match(main, /const MAX_AUTO_RELOAD = 3;/);
+  assert.match(main, /setTimeout\(\(\) => \{ if \(!contents\.isDestroyed\(\)\) contents\.reload\(\); \}, 5000\)/);
+  assert.match(main, /render-process-gone', \(event, details\)/);
+  assert.match(main, /details\.reason === 'clean-exit' \|\| details\.reason === 'killed'/);
+  assert.match(main, /contents\.on\('unresponsive'/);
+  assert.match(main, /autoReloadAttempts = 0; \/\/ trang da tai xong/);
+  // P1b: don cache giu dang nhap — chi xoa HTTP cache, code cache, CacheStorage, ServiceWorker
+  assert.match(main, /ipcMain\.handle\('profile-clear-cache'/);
+  assert.match(main, /await sess\.clearCache\(\)/);
+  assert.match(main, /await sess\.clearCodeCaches\(\{\}\)/);
+  assert.match(main, /await sess\.clearStorageData\(\{ storages: \['cachestorage', 'serviceworkers'\] \}\)/);
+  // khong duoc xoa cookies / localStorage / IndexedDB — mat tin nhan + mat dang nhap
+  assert.doesNotMatch(main, /clearStorageData\(\{ storages: \[[^\]]*'cookies'/);
+  assert.doesNotMatch(main, /clearStorageData\(\{ storages: \[[^\]]*'indexdb'/);
+  assert.doesNotMatch(main, /clearStorageData\(\{ storages: \[[^\]]*'localstorage'/);
+  // UI: nut "Dọn cache (giữ đăng nhập)" trong modal chinh sua tai khoan
+  assert.match(html, /id="modal-clear-cache"[^>]*>Dọn cache \(giữ đăng nhập\)<\/button>/);
+  assert.match(renderer, /getElementById\('modal-clear-cache'\)\.onclick/);
+  assert.match(renderer, /ipcRenderer\.invoke\('profile-clear-cache', editingProfile\.id\)/);
+  assert.match(renderer, /getElementById\('modal-clear-cache'\)\.style\.display = profileToEdit \? 'inline-flex' : 'none'/);
+});
+
+test('v2.5.40 conversation diag: đếm hội thoại Zalo sau khi tải, chỉ cảnh báo khi ở chat.zalo.me, không đọc dữ liệu đăng nhập', () => {
+  const main = fs.readFileSync(path.join(root, 'main.js'), 'utf8');
+  const renderer = fs.readFileSync(path.join(root, 'renderer.js'), 'utf8');
+  // Ham chan doan duoc goi sau did-finish-load cho Zalo
+  assert.match(main, /scheduleConversationDiag\(contents, profileId\)/);
+  assert.match(main, /function scheduleConversationDiag\(contents, profileId\)/);
+  // Cho 6s de Zalo render list roi moi dem
+  assert.match(main, /\}, 6000\);/);
+  // Chi chay khi dang o chat.zalo.me (bo qua man hinh dang nhap id.zalo.me de count=0 khong bi bao oan)
+  assert.match(main, /if \(!url\.includes\('chat\.zalo\.me'\)\) return;/);
+  // Do cache bang getCacheSize tren dung partition cua profile
+  assert.match(main, /getCacheSize\(\)/);
+  assert.match(main, /session\.fromPartition\(p\.partition\)/);
+  // Chan doan khong duoc doc cookies / localStorage / IndexedDB cua Zalo (chi phan code, bo qua comment)
+  const diagFn = main.slice(main.indexOf('function scheduleConversationDiag'), main.indexOf('function setupDownloads'));
+  const diagCode = diagFn.slice(diagFn.indexOf('setTimeout'));
+  assert.doesNotMatch(diagCode, /cookies\./);
+  assert.doesNotMatch(diagCode, /localStorage\.getItem|localStorage\.setItem/);
+  assert.doesNotMatch(diagCode, /\.getStorageData\s*\(/);
+  // Gui canh bao cho renderer
+  assert.match(main, /sendToRenderer\('zalo-conversation-diag'/);
+  // Renderer: chi bao khi dung nick dang mo, chan spam 60s, khong dung khi khong phai profile dang hoat dong
+  assert.match(renderer, /ipcRenderer\.on\('zalo-conversation-diag'/);
+  assert.match(renderer, /payload\.profileId !== activeProfileId\) return;/);
+  assert.match(renderer, /zalo-diag-.*payload\.profileId/);
+  assert.match(renderer, /< 60000\) return;/);
+  assert.match(renderer, /Dọn cache \(giữ đăng nhập\)/);
+});

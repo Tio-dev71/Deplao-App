@@ -1121,7 +1121,31 @@ function getProfilePlatform(profileId) {
 function setupWebContents(contents, profileId) {
   contents.on('did-start-loading', () => sendToRenderer('profile-connection-state', { id: profileId, state: 'loading' }));
   contents.on('did-stop-loading', () => sendToRenderer('profile-connection-state', { id: profileId, state: 'online' }));
-  contents.on('did-fail-load', () => sendToRenderer('profile-connection-state', { id: profileId, state: 'error' }));
+  // P1: tự phục hồi khi trang Zalo lỗi mạng / crash render / đơ — reload tối đa 3 lần, cách 5s.
+  // Bộ đếm reset khi trang load thành công; ERR_ABORTED (-3) là điều hướng bình thường nên bỏ qua.
+  let autoReloadAttempts = 0;
+  let autoReloadTimer = null;
+  const MAX_AUTO_RELOAD = 3;
+  const scheduleAutoReload = (reason) => {
+    if (autoReloadAttempts >= MAX_AUTO_RELOAD) return;
+    autoReloadAttempts += 1;
+    clearTimeout(autoReloadTimer);
+    autoReloadTimer = setTimeout(() => { if (!contents.isDestroyed()) contents.reload(); }, 5000);
+  };
+  contents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+    if (!isMainFrame || errorCode === -3) return;
+    sendToRenderer('profile-connection-state', { id: profileId, state: 'error' });
+    scheduleAutoReload(errorDescription);
+  });
+  contents.on('render-process-gone', (event, details) => {
+    if (details.reason === 'clean-exit' || details.reason === 'killed') return;
+    scheduleAutoReload(details.reason);
+  });
+  contents.on('unresponsive', () => {
+    if (autoReloadAttempts >= MAX_AUTO_RELOAD) return;
+    autoReloadAttempts += 1;
+    if (!contents.isDestroyed()) contents.reload();
+  });
   contents.setWindowOpenHandler(({ url }) => {
     if (url === 'about:blank' || url.startsWith('blob:') || url.startsWith('file:')) return { action: 'allow' };
     if (isInternalUrl(url)) return { action: 'allow' };
@@ -1166,6 +1190,7 @@ function setupWebContents(contents, profileId) {
     if (menu.items.length > 0) menu.popup({ window: mainWindow });
   });
   contents.on('did-finish-load', () => {
+    autoReloadAttempts = 0; // trang da tai xong -> cho phep phuc hoi day du lan o loi ke tiep
     try {
       const currentUrl = contents.getURL();
       const host = new URL(currentUrl).hostname || '';
@@ -1183,6 +1208,7 @@ function setupWebContents(contents, profileId) {
       contents.insertCSS(fs.readFileSync(path.join(__dirname, 'custom_style.css'), 'utf8'));
       if (platformClass === 'platform-zalo') {
         contents.send('quick-reply:ensure-ready', { replies: getWorkspaceState().data.quickReplies || [] });
+        scheduleConversationDiag(contents, profileId);
       }
     } catch (e) { }
   });
@@ -1192,6 +1218,36 @@ function setupWebContents(contents, profileId) {
   } else {
     contents.on('before-input-event', (event, input) => { if (input.key === 'F12' || (input.control && input.shift && input.key === 'I')) contents.toggleDevTools(); });
   }
+}
+
+function scheduleConversationDiag(contents, profileId) {
+  // Chẩn đoán "1 nick nhưng không thấy hội thoại" — không gắn bộ đo nặng, chỉ đếm DOM + đo cache.
+  // Chạy 6s sau did-finish-load (Zalo cần vài giây render list). Chỉ báo khi đang ở chat.zalo.me
+  // (đã đăng nhập) mà đếm được 0 hội thoại. Không đọc cookie/localStorage/IndexedDB, không gửi ra ngoài.
+  setTimeout(async () => {
+    try {
+      if (contents.isDestroyed()) return;
+      const url = contents.getURL();
+      if (!url.includes('chat.zalo.me')) return; // màn hình đăng nhập id.zalo.me count=0 là bình thường
+      const count = await contents.executeJavaScript(`(function(){
+        try{
+          var sels=['[data-id*="conv"]','.conv-item','[class*="conversation"] a','[data-testid*="conversation"]','#conversationList > *','[class*="chat-list"] [class*="item"]'];
+          for(var k=0;k<sels.length;k++){try{var els=document.querySelectorAll(sels[k]); if(els&&els.length) return els.length;}catch(e){}}
+          return 0;
+        }catch(e){return -1;}
+      })()`, true).catch(() => -1);
+      let cacheBytes = -1;
+      try {
+        const ws = getWorkspaceState();
+        const p = (ws.data.profiles || []).find(x => x.id === profileId);
+        if (p && p.partition) cacheBytes = await session.fromPartition(p.partition).getCacheSize();
+      } catch {}
+      console.log(`[diag] zalo conversations count=${count} cache=${cacheBytes}B profile=${profileId}`);
+      if (count === 0) {
+        sendToRenderer('zalo-conversation-diag', { profileId, count, cacheBytes });
+      }
+    } catch {}
+  }, 6000);
 }
 
 function setupDownloads(sess) {
@@ -1319,7 +1375,10 @@ function createWindow() {
     if (appLocked || !storeUnlocked) return;
     activeProfileId = profile.id;
     if (!browserViews[profile.id]) {
-      const view = new BrowserView({ webPreferences: { partition: profile.partition, preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false } });
+      // backgroundThrottling: false — Zalo Web chay trong BrowserView an van phai giu
+      // timer/WebSocket/Raf song; mac dinh Chromium se giam timer khi view khong hien thi
+      // lam tin nhan den tre hoac mat thong bao khi nhan vien mo tab khac.
+      const view = new BrowserView({ webPreferences: { partition: profile.partition, preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false } });
       browserViews[profile.id] = view;
       setupWebContents(view.webContents, profile.id);
       const sess = session.fromPartition(profile.partition);
@@ -1831,6 +1890,26 @@ function createWindow() {
     if (wc && !wc.isDestroyed()) wc.setZoomFactor(safeFontSize / 16);
   });
   ipcMain.on('reload-page', () => activeProfileId && browserViews[activeProfileId]?.webContents.reload());
+  // P1: "Dọn cache Zalo (giữ đăng nhập)" — chỉ xoá HTTP cache, code cache, CacheStorage,
+  // ServiceWorker của partition đang chọn. KHÔNG đụng cookies / localStorage / IndexedDB
+  // nên tin nhắn và phiên đăng nhập Zalo được giữ nguyên; giúp hết lag do cache phình to.
+  ipcMain.handle('profile-clear-cache', async (event, profileId) => {
+    if (!storeUnlocked) return { ok: false, locked: true };
+    try {
+      const ws = getWorkspaceState();
+      const profile = (ws.data.profiles || []).find(p => p.id === (profileId || activeProfileId));
+      if (!profile || !profile.partition) return { ok: false, message: 'Không tìm thấy tài khoản để dọn cache.' };
+      const sess = session.fromPartition(profile.partition);
+      await sess.clearCache();
+      await sess.clearCodeCaches({});
+      await sess.clearStorageData({ storages: ['cachestorage', 'serviceworkers'] });
+      const view = browserViews[profile.id];
+      if (view && !view.webContents.isDestroyed()) view.webContents.reload();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, message: e.message };
+    }
+  });
   ipcMain.on('get-settings', (event) => {
     if (!storeUnlocked) {
       event.returnValue = { locked: true, isDarkMode: false, quickReplies: [], quicksandFontDataUrl: getQuicksandFontDataUrl() };

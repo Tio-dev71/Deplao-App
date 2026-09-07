@@ -1,6 +1,6 @@
 {
   "name": "9meta",
-  "version": "2.5.38",
+  "version": "2.5.40",
   "description": "Nhà Yến Zalo - Quản lý nhiều tài khoản, người dùng và nhóm Zalo trên Desktop.",
   "main": "main.js",
   "scripts": {
@@ -49,7 +49,7 @@
       "artifactName": "Nha-Yen-Zalo-Setup-${version}.${ext}"
     },
     "releaseInfo": {
-      "releaseNotes": "Nạp sẵn 154 tin nhắn nhanh vào bộ cài; máy mới cài xong là có ngay (40 mẫu có ảnh)."
+      "releaseNotes": "1) Fix lỗi mất tin nhắn Zalo bất thường: tab Zalo chạy ngầm không bị chậm, tự tải lại khi mất mạng/crash, thêm nút Dọn cache (giữ đăng nhập) trong Chỉnh sửa tài khoản. 2) Tạo đơn Pancake lấy mã đơn và sao chép nhanh. 3) Tab Pancake hoạt động ổn định; ô tìm đổi nhãn \"Tìm sản phẩm\" và ưu tiên kết quả khớp đúng tên lên đầu. 4) Tin nhắn nhanh có nút Chèn và gõ \\ để chọn nhanh."
     },
     "publish": [
       {
