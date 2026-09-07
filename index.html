@@ -5,11 +5,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description"
-    content="9Meta - Quản lý đa tài khoản Zalo, Messenger, Fanpage, Telegram, WhatsApp trên Desktop với CRM, Campaign, AI và Analytics.">
-  <title>9Meta Control Center</title>
+    content="Nhà Yến Zalo - Quản lý nhiều tài khoản, người dùng và nhóm Zalo trên Desktop.">
+  <title>Nhà Yến Zalo</title>
   <style>
+    @font-face {
+      font-family: 'Quicksand';
+      src: url('./assets/fonts/Quicksand-VariableFont_wght.ttf') format('truetype');
+      font-style: normal;
+      font-weight: 300 700;
+      font-display: swap;
+    }
+
     :root {
-      --sidebar: 72px;
+      --profile-rail: 68px;
+      --topbar: 42px;
+      --sidebar: var(--profile-rail);
+      --app-font-size: 16px;
+      --app-font-family: 'Quicksand', sans-serif;
+      --ui-font-size: 13px;
       --bg: #08111f;
       --panel: rgba(11, 18, 34, .78);
       --panel-soft: rgba(255, 255, 255, .06);
@@ -28,13 +41,21 @@
       box-sizing: border-box;
     }
 
+    button,
+    input,
+    select,
+    textarea,
+    output {
+      font: inherit;
+    }
+
     html,
     body {
       margin: 0;
       padding: 0;
       height: 100%;
       overflow: hidden;
-      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      font-family: var(--app-font-family);
       background:
         radial-gradient(circle at top left, rgba(84, 123, 255, .22), transparent 30%),
         radial-gradient(circle at top right, rgba(124, 92, 255, .16), transparent 26%),
@@ -58,26 +79,29 @@
 
     #app-shell {
       display: grid;
-      grid-template-columns: var(--sidebar) 1fr;
+      grid-template-columns: var(--profile-rail) 1fr var(--utility-panel-width, 0px);
+      grid-template-rows: var(--topbar) 1fr;
       height: 100%;
       position: relative;
     }
 
-    #sidebar {
+    #profile-rail {
+      grid-column: 1;
+      grid-row: 2;
       height: 100%;
       backdrop-filter: blur(22px);
       -webkit-backdrop-filter: blur(22px);
-      background: linear-gradient(180deg, rgba(9, 14, 26, .92), rgba(10, 18, 31, .72));
+      background: #fff;
       border-right: 1px solid var(--line);
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 14px 0 10px;
-      box-shadow: 8px 0 40px rgba(0, 0, 0, .25);
+      box-shadow: none;
       z-index: 5;
     }
 
-    body.light-mode #sidebar {
+    body.light-mode #profile-rail {
       background: linear-gradient(180deg, rgba(255, 255, 255, .86), rgba(244, 248, 255, .82));
     }
 
@@ -93,7 +117,255 @@
       background: linear-gradient(135deg, var(--primary), var(--primary-2));
       box-shadow: 0 16px 30px rgba(90, 117, 255, .35);
       margin-bottom: 14px;
+      overflow: hidden;
     }
+
+    #brand-badge img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .sidebar-nav {
+      width: 100%;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 0;
+      scrollbar-width: none;
+      margin-top: auto;
+      flex: 0 1 auto;
+      max-height: calc(100% - 116px);
+    }
+
+    .sidebar-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    #profile-rail .tool-btn {
+      color: #667085;
+      border-radius: 10px;
+    }
+
+    #profile-rail .tool-btn:hover,
+    #profile-rail .tool-btn.active {
+      color: #fff;
+      background: #1767d9;
+      box-shadow: none;
+    }
+
+    #app-topbar {
+      grid-column: 1 / 4;
+      grid-row: 1;
+      height: var(--topbar);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px 0 14px;
+      background: #fff;
+      color: #1c2b44;
+      border-bottom: 1px solid #e5e7eb;
+      z-index: 8;
+      font-size: var(--app-font-size);
+      -webkit-app-region: drag;
+    }
+
+    .topbar-brand {
+      font-weight: 700;
+      color: #1767df;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-brand img { width: 24px; height: 24px; border-radius: 6px; }
+
+    .topbar-version {
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 600;
+      color: #000;
+      background: none;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+      -webkit-app-region: no-drag;
+    }
+
+    .topbar-version:hover, .topbar-version:focus-visible { text-decoration: underline; }
+
+    .topbar-actions { position: relative; margin-right: 138px; display: flex; align-items: center; gap: 5px; -webkit-app-region: no-drag; }
+    .topbar-primary { height: 32px; padding: 0 11px; border: 1px solid #1767d9; border-radius: 8px; background: #1767d9; color: #fff; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .topbar-primary:hover { background: #1259c0; border-color: #1259c0; }
+    .topbar-quote { height: 32px; padding: 0 11px; border: 1px solid #d8dee8; border-radius: 8px; background: #fff; color: #1767d9; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .topbar-quote:hover, .topbar-quote.active { color: #fff; border-color: #1767d9; background: #1767d9; }
+
+    .topbar-more {
+      width: 36px;
+      height: 34px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #334155;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .topbar-more:hover,
+    .topbar-more[aria-expanded="true"] { background: #eef2f7; }
+    /* Popup "Da tao ma don" nam GON TRONG dai topbar (cao 42px) va sat ben trai nut Tao don.
+       BrowserView Zalo la lop native phu tu y=42 tro xuong nen popup phai cao <=39px de khong bi che. */
+    #pancake-created-popup { position:absolute; top:1px; right:calc(100% + 10px); z-index:60; display:none; align-items:center; gap:8px; padding:4px 10px; border:1px solid #dfe5ee; border-radius:10px; background:#fff; box-shadow:0 10px 26px rgba(15,23,42,.18); white-space:nowrap; -webkit-app-region:no-drag; }
+    #pancake-created-popup.show { display:flex; }
+    #pancake-created-popup .created-label { color:#475569; font-size:12px; font-weight:700; }
+    #pancake-created-popup .created-code { color:#1767d9; font-size:22px; font-weight:800; line-height:1.1; }
+    #pancake-created-copy { height:26px; padding:0 10px; border:1px solid #1767d9; border-radius:6px; background:#fff; color:#1767d9; font-size:12px; font-weight:700; cursor:pointer; }
+    #pancake-created-copy:hover { background:#1767d9; color:#fff; }
+    /* Che do loi: label + ma don mau do, an nut sao chep */
+    #pancake-created-popup[data-mode="error"] .created-label { color:#b91c1c; }
+    #pancake-created-popup[data-mode="error"] .created-code { color:#dc2626; }
+    /* Nut Huy chi hien voi don thu 0d tao tu dong */
+    #pancake-created-cancel { height:26px; padding:0 10px; border:1px solid #dc2626; border-radius:6px; background:#fff; color:#dc2626; font-size:12px; font-weight:700; cursor:pointer; }
+    #pancake-created-cancel:hover:not(:disabled) { background:#dc2626; color:#fff; }
+    #pancake-created-cancel:disabled { opacity:.6; cursor:default; }
+    #pancake-created-close { width:24px; height:24px; display:grid; place-items:center; border:0; border-radius:6px; background:#f1f3f7; color:#667085; font-size:14px; font-weight:700; line-height:1; cursor:pointer; }
+    #pancake-created-close:hover { background:#e1e5ed; color:#1e293b; }
+
+    #app-more-menu {
+      position: fixed;
+      right: 12px;
+      top: 44px;
+      width: 268px;
+      padding: 14px;
+      border: 1px solid #d8dee8;
+      border-radius: 12px;
+      background: #fff;
+      color: #1f2937;
+      box-shadow: 0 18px 44px rgba(15, 23, 42, .18);
+      z-index: 100;
+    }
+
+    #app-more-menu[hidden] { display: none; }
+    .font-control-head, .font-control-limits { display: flex; justify-content: space-between; }
+    .font-control-head { margin-bottom: 10px; font-size: 13px; font-weight: 600; }
+    .font-control-limits { margin-top: 4px; color: #64748b; font-size: 10px; }
+    #font-size-range { width: 100%; accent-color: #3b82f6; }
+
+    body { font-size: var(--app-font-size); }
+
+    /* Deplao-inspired light application surfaces */
+    .overlay {
+      background: rgba(15, 23, 42, .28);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    /* Popup công cụ neo cạnh phải: Zalo Web thu hẹp lại nhưng vẫn hiện và dùng được,
+       không lớp xám, không blur, popup chỉ chiếm đúng cột của nó. */
+    :root { --popup-width: 560px; }
+
+    body.popup-docked .overlay {
+      left: auto;
+      right: 0;
+      width: var(--popup-width);
+      padding: 0;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      align-items: stretch;
+      justify-content: stretch;
+      animation: none;
+    }
+
+    body.popup-docked .overlay .panel-box,
+    body.popup-docked .overlay .modal-box {
+      width: 100%;
+      max-width: none;
+      height: 100%;
+      max-height: none;
+      border-radius: 0;
+      border-right: 0;
+      border-top: 0;
+      border-bottom: 0;
+      box-shadow: -14px 0 36px rgba(15, 23, 42, .16);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body.popup-docked .overlay .panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+
+    #popup-resizer {
+      position: fixed;
+      top: var(--topbar);
+      bottom: 0;
+      right: var(--popup-width);
+      width: 6px;
+      z-index: 100;
+      cursor: col-resize;
+      background: transparent;
+    }
+
+    #popup-resizer:hover, #popup-resizer.dragging { background: rgba(23, 103, 217, .35); }
+    #popup-resizer[hidden] { display: none; }
+
+    .table-wrap { overflow: auto; border: 1px solid #e1e6ee; border-radius: 10px; background: #fff; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th, .data-table td { padding: 8px 10px; border-bottom: 1px solid #eef1f6; text-align: left; vertical-align: top; }
+    .data-table th { position: sticky; top: 0; z-index: 1; background: #f7f9fc; font-weight: 600; color: #475467; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .data-table .col-stt { width: 52px; }
+    .data-table .col-image { width: 76px; }
+    .data-table .col-actions { width: 132px; white-space: nowrap; }
+    .data-table td.qr-content { max-width: 320px; white-space: pre-wrap; word-break: break-word; }
+    .data-table .qr-keyword { font-family: inherit; font-weight: 700; color: #1767d9; }
+    .qr-thumb { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; border: 1px solid #e1e6ee; background: #f7f9fc; }
+    .qr-thumb-missing { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 8px; border: 1px dashed #ef5267; color: #d92d45; font-size: 11px; text-align: center; line-height: 1.2; }
+    .qr-row-warning { background: #fff7f7; }
+    .row-actions { display: flex; gap: 6px; }
+    .row-actions button { min-height: 30px; padding: 0 10px; font-size: 12px; }
+    .pager-row { align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pager-row button { min-height: 32px; padding: 0 12px; }
+    .qr-editor { margin-top: 16px; }
+    .qr-image-preview { margin: 10px 0; }
+    .qr-image-preview img { max-width: 220px; max-height: 160px; border-radius: 10px; border: 1px solid #e1e6ee; }
+    .qr-error { margin-top: 10px; color: #d92d45; font-size: 13px; }
+    .qr-confirm { margin-top: 16px; padding: 12px; border: 1px solid #ef5267; border-radius: 10px; background: #fff7f7; }
+    .qr-confirm .row { margin-top: 10px; }
+
+    .panel-box,
+    .modal-box,
+    body.light-mode .panel-box,
+    body.light-mode .modal-box {
+      border-radius: 12px;
+      padding: 20px;
+      color: #1f2937;
+      background: #fff;
+      border: 1px solid #dce2ea;
+      box-shadow: 0 18px 44px rgba(15, 23, 42, .18);
+    }
+
+    .panel-head {
+      margin: -20px -20px 16px;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e9f0;
+      background: #fff;
+    }
+
+    .panel-title { font-size: 18px; color: #1f2937; }
+    .card { border-radius: 10px; border-color: #e1e6ee; background: #fff; box-shadow: none; }
+    .modal-input, .modal-select, .modal-textarea { border-radius: 8px; background: #fff; color: #1f2937; border-color: #d8dee8; }
+    .modal-btn { min-height: 38px; border-radius: 8px; box-shadow: none; font-family:Quicksand, sans-serif; font-size:13px; font-weight:600; }
+    .modal-btn.save { background: #1767d9; border-color: #1767d9; }
+    .modal-btn.save:hover { background: #0f57be; }
+    .modal-btn.cancel { background: #fff; color: #344054; border: 1px solid #d8dee8; }
+    .modal-btn.warn { background: #fff; color: #d92d45; border: 1px solid #ef5267; }
+    .crm-status-chip { height:30px; min-height:30px; padding:0 10px; margin-left:auto; color:#1767d9; background:#eaf2ff; border:1px solid #b8cff0; border-radius:999px; font:600 12px Quicksand,sans-serif; cursor:pointer; }
+    .utility-head { gap:8px; }
 
     #profiles-list {
       display: flex;
@@ -104,6 +376,8 @@
       overflow-y: auto;
       scrollbar-width: none;
       padding-bottom: 8px;
+      flex: 0 1 auto;
+      max-height: 42%;
     }
 
     #profiles-list::-webkit-scrollbar {
@@ -129,9 +403,11 @@
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      overflow: hidden;
+      overflow: visible;
       box-shadow: 0 12px 28px rgba(0, 0, 0, .22);
     }
+    .profile-avatar-clip { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:inherit; }
+    .profile-avatar-clip img { width:100%; height:100%; object-fit:cover; }
 
     body.light-mode .profile-btn {
       background: linear-gradient(135deg, rgba(255, 255, 255, .95), rgba(241, 245, 255, .96));
@@ -164,8 +440,32 @@
       color: #fff;
       font-size: 9px;
       font-weight: 800;
-      border: 2px solid #0f1624;
+      border: 2px solid #fff;
+      z-index: 4;
+      box-shadow: 0 2px 6px rgba(15,23,42,.28);
     }
+
+    .tool-btn.task-running {
+      color: #1767d9;
+      background: rgba(23, 103, 217, .1);
+      box-shadow: inset 0 0 0 1px rgba(23, 103, 217, .2);
+    }
+
+    .tool-btn.task-running .badge {
+      animation: taskPulse 1.1s ease-in-out infinite alternate;
+    }
+
+    /* Badge tien do quet (vi du 420/799) can rong hon badge so tin chua doc. */
+    .badge.badge-progress {
+      right: -12px;
+      padding: 0 5px;
+      font-size: 8.5px;
+      letter-spacing: -.2px;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @keyframes taskPulse { from { opacity: .55; transform: scale(.9); } to { opacity: 1; transform: scale(1.08); } }
 
     .sidebar-spacer {
       flex: 1;
@@ -227,9 +527,13 @@
 
     #btn-add-profile {
       margin-top: 10px;
-      border: 1.5px dashed rgba(255, 255, 255, .2);
-      background: rgba(255, 255, 255, .04);
+      border: 1.5px dashed #98a2b3;
+      background: #fff;
+      color: #1767d9;
+      border-radius: 50%;
+      box-shadow: none;
     }
+    #btn-add-profile svg { width: 22px; height: 22px; stroke: #1767d9; stroke-width: 2.4; }
 
     #tools-overlay {
       display: none;
@@ -420,7 +724,10 @@
     .overlay {
       display: none;
       position: fixed;
-      inset: 0;
+      left: var(--sidebar);
+      top: var(--topbar);
+      right: 0;
+      bottom: 0;
       z-index: 99;
       background: rgba(3, 8, 17, .62);
       backdrop-filter: blur(14px);
@@ -462,6 +769,31 @@
       width: 700px;
     }
 
+    .profile-btn::after {
+      content: '';
+      position: absolute;
+      right: 1px;
+      bottom: 1px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #f59e0b;
+      border: 2px solid #fff;
+      z-index: 2;
+    }
+
+    .profile-btn[data-connection-state="online"]::after { background: #22a559; }
+    .profile-btn[data-connection-state="error"]::after { background: #d92d45; }
+
+    .panel-box {
+      overflow: hidden;
+    }
+
+    /* panel-head sticky khong dung duoc background:inherit (panel-box chi co gradient nua trong
+       suot) => noi dung cuon ben duoi hien xuyen qua tieu de. Dung mau dac khop nen tung theme. */
+    .panel-head { background: #16213b; }
+    body.light-mode .panel-head { background: #fff; }
+
     body.light-mode .modal-box,
     body.light-mode .panel-box {
       background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(246, 249, 255, .94));
@@ -483,6 +815,22 @@
     .panel-title,
     .section-title {
       margin: 0;
+    }
+
+    .panel-head {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      flex: 0 0 auto;
+      padding-bottom: 4px;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .panel-body {
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 4px;
     }
 
     .panel-title {
@@ -528,6 +876,86 @@
     body.light-mode .modal-select option {
       background: #fff;
       color: #0f172a;
+    }
+
+    .group-filter-bar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(190px, .65fr) auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 12px;
+    }
+
+    .group-filter-bar .modal-input,
+    .group-filter-bar .modal-select {
+      margin-top: 0;
+    }
+    .filter-row { display: grid; grid-template-columns: minmax(220px, 1.4fr) minmax(150px, .7fr) minmax(190px, 1fr); gap: 12px; }
+    .filter-row .modal-input, .filter-row .modal-select { margin-top: 0; }
+
+    .group-results {
+      min-height: 180px;
+      max-height: 360px;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      scrollbar-gutter: stable;
+      overscroll-behavior: contain;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .group-results::-webkit-scrollbar { width: 12px; }
+    .group-results::-webkit-scrollbar-track { background: #eef2f7; border-radius: 0 14px 14px 0; }
+    .group-results::-webkit-scrollbar-thumb { background: #98a2b3; border: 3px solid #eef2f7; border-radius: 999px; }
+    /* Khong dung ID o day: specificity ID cua `#... .panel-box { height:min(90vh,900px) }`
+       se de `body.popup-docked .overlay .panel-box { height:100% }` (danh sach o tren) va tao
+       dai trang  o duoi panel khi neo phai. Class `.panel-box.tall-panel` (0,2,0) thap hon
+       `body.popup-docked .overlay .panel-box` (0,3,1) nen mep 900px chi dung khi KHONG neo. */
+    .panel-box.tall-panel { height: min(90vh, 900px); display: flex; flex-direction: column; overflow: hidden; }
+    .video-library-row { display:flex; align-items:center; gap:12px; padding:12px; border-bottom:1px solid var(--line); cursor:pointer; }
+    .video-library-row.selected { background:#eaf2ff; }
+    .video-library-play { width:52px; height:42px; display:grid; place-items:center; border-radius:9px; background:#cbd5e1; color:white; flex:0 0 auto; }
+    .video-library-play.has-thumb { background:#0f172a center/cover no-repeat; color:transparent; position:relative; }
+    .video-library-play.has-thumb::after { content:'▶'; position:absolute; inset:0; display:grid; place-items:center; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.7); }
+    .video-duration { font-variant-numeric: tabular-nums; }
+
+    /* Keo popup neo canh phai bang thanh tieu de. */
+    body.popup-docked .panel-head { cursor: ew-resize; user-select: none; }
+    body.popup-docked .panel-head button { cursor: pointer; }
+    /* Dang keo thi khoa chon van ban va giu con tro tren toan man hinh. */
+    body.popup-dragging { cursor: ew-resize; user-select: none; }
+    body.popup-dragging .overlay .panel-box { box-shadow: -14px 0 36px rgba(23, 103, 217, .30); }
+    .video-library-info { display:flex; flex-direction:column; gap:4px; min-width:0; flex:1; }
+    .icon-button { width:34px; height:34px; padding:0; display:inline-grid; place-items:center; border:1px solid #dfe5ee; border-radius:7px; background:#fff; color:#526078; cursor:pointer; flex:0 0 auto; }
+    .icon-button:hover { border-color:#8eb6ee; color:#1767d9; background:#f5f9ff; }
+    .icon-button.danger-icon { color:#dc3545; }
+    .icon-button.save-icon { color:#16803d; }
+    .video-rename-editor { display:flex; align-items:center; gap:6px; min-width:0; }
+    .video-rename-editor .modal-input { min-width:0; height:34px; padding:6px 9px; margin:0; }
+    #zalo-users-overlay .panel-body { min-height: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #zalo-users-results { min-height: 180px; max-height: none; flex: 1 1 0; }
+    #zalo-groups-results { height: clamp(220px, 36vh, 460px); max-height: none; flex: 0 0 auto; }
+
+    .group-result-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .group-result-row:last-child { border-bottom: 0; }
+    .group-result-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .group-result-row input { width: 17px; height: 17px; accent-color: var(--primary); }
+    .group-action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .group-action-config { margin-top: 12px; }
+    .group-action-config .modal-textarea { margin-top: 12px; }
+    .group-action-log { max-height: 150px; overflow: auto; margin-top: 12px; }
+
+    @media (max-width: 700px) {
+      .group-filter-bar { grid-template-columns: 1fr; }
     }
 
     .modal-textarea {
@@ -820,51 +1248,346 @@
         grid-template-columns: repeat(3, 1fr);
       }
     }
+    #crm-utility-panel {
+      grid-column: 3;
+      grid-row: 2;
+      min-width: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #f7f8fb;
+      color: #202939;
+      border-left: 1px solid #dce2ea;
+      z-index: 6;
+      overflow: hidden;
+    }
+    #crm-utility-panel.collapsed { display: none; }
+    .utility-head { height: 48px; flex: 0 0 48px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; background: #fff; border-bottom: 1px solid #e5e9f0; }
+    .utility-head strong { font-size: 14px; }
+    .utility-context { padding: 9px 12px; background: #eef5ff; border-bottom: 1px solid #d6e5fb; font-size: 12px; color: #475467; }
+    .utility-context b { color: #1767d9; }
+    .crm-connect { padding: 10px 12px; border-bottom: 1px solid #dfe4eb; background: #fff; }
+    .crm-connect-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .crm-connect-grid .wide { grid-column: 1 / -1; }
+    .crm-connected-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+    .crm-dot { width: 8px; height: 8px; border-radius: 50%; background: #22a75a; display: inline-block; margin-right: 5px; }
+    .utility-pane { display: none; min-height: 0; flex: 1; overflow-y: auto; padding: 12px; }
+    .utility-pane:not(.active) { display: none !important; }
+    .utility-pane.active { display: block; }
+    .utility-label { display: block; margin: 12px 0 6px; color: #667085; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .quote-paper-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .quote-paper { border: 1px solid #dfe4eb; border-radius: 8px; background: #fff; padding: 9px; text-align: left; cursor: pointer; color: #1f2937; }
+    .quote-paper:last-child { grid-column: 1 / -1; }
+    .quote-paper.active { border-color: #2775df; background: #eff6ff; box-shadow: inset 0 0 0 1px #2775df; }
+    .quote-paper span { display: block; color: #7b8495; font-size: 11px; margin-top: 2px; }
+    .quote-toggle { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; }
+    .quote-result { margin-top: 12px; padding: 10px; border: 1px solid #e0e4ea; border-radius: 8px; background: #fff; }
+    .quote-result-row { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; font-size: 12px; color: #667085; }
+    .quote-result-row strong { color: #1f2937; }
+    .quote-result-row.total { border-top: 1px dashed #d9dee6; margin-top: 4px; padding-top: 10px; font-weight: 700; }
+    .utility-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px; }
+    .utility-status { min-height: 18px; margin-top: 8px; color: #1767d9; font-size: 12px; }
+    .mapping-card { padding: 11px; border: 1px solid #dfe4eb; border-radius: 8px; background: #fff; margin-bottom: 10px; }
+    .mapping-card h4 { margin: 0 0 5px; font-size: 13px; }
+    .mapping-card p { margin: 3px 0; color: #667085; font-size: 12px; overflow-wrap: anywhere; }
+    .mapping-state { display: inline-flex; padding: 3px 7px; border-radius: 999px; background: #fff5df; color: #946200; font-size: 11px; font-weight: 700; }
+    .mapping-state.linked { background: #eaf8ef; color: #18733b; }
+    .crm-order-list { display: flex; flex-direction: column; gap: 7px; margin-top: 8px; }
+    .crm-order-row { width: 100%; border: 1px solid #dfe4eb; border-radius: 8px; padding: 9px; background: #fff; text-align: left; color: #202939; cursor: pointer; }
+    .crm-order-row strong, .crm-order-row span { display: block; }
+    .crm-order-row span { color: #667085; font-size: 11px; margin-top: 3px; }
+    .compact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .utility-tabs { flex: 0 0 58px; display: grid; grid-template-columns: repeat(3, 1fr); background: #fff; border-top: 1px solid #dfe4eb; }
+    .utility-tab { border: 0; background: transparent; color: #667085; cursor: pointer; font: inherit; font-size: 10px; font-weight: 700; padding: 7px 3px; }
+    .utility-tab svg { display: block; width: 18px; height: 18px; margin: 0 auto 3px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+    .utility-tab.active { color: #1767d9; box-shadow: inset 0 2px #1767d9; }
+    .utility-section { margin-bottom: 12px; padding: 12px; border: 1px solid #dfe5ee; border-radius: 12px; background: #fff; }
+    .utility-section h3 { margin: 0 0 10px; font-size: 13px; }
+    .utility-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .utility-form-grid .wide { grid-column: 1 / -1; }
+    .utility-search-results { max-height: 190px; overflow-y: auto; margin-top: 6px; border-radius: 9px; }
+    .pancake-item-row { display: grid; grid-template-columns: minmax(0,1fr) 68px 96px 110px 34px; align-items: center; gap: 4px; padding: 4px 6px; border-bottom: 1px solid #edf0f5; min-height: 32px; }
+    .pancake-item-row strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ui-font-size); line-height: 28px; }
+    .pancake-item-row input { width: 100%; min-width: 0; font-size: var(--ui-font-size); font-weight: 600; text-align:right; font-variant-numeric:tabular-nums; height:28px; min-height:28px; padding:0 4px; border:0; border-radius:4px; background:#f7f8fb; }
+    .pancake-line-total { text-align:right; white-space:nowrap; font-size: calc(var(--ui-font-size) + 1px); font-weight:700; color:#1d4ed8; font-variant-numeric:tabular-nums; line-height:28px; }
+    .pancake-item-row .icon-button { width:20px; height:20px; font-size:12px; line-height:1; border-radius:5px; }
+    .utility-summary { display: grid; gap: 6px; font-size: 12px; }
+    .utility-summary div { display: flex; justify-content: space-between; gap: 12px; }
+    .utility-summary .total { padding-top: 8px; border-top: 1px dashed #cfd6e2; font-weight: 800; color: #1767d9; }
+    .utility-empty { padding: 16px 8px; color: #7b8495; text-align: center; font-size: 12px; }
+    #crm-utility-panel { width: var(--utility-panel-width, 560px); min-width:0; }
+    .design-panel { height:100%; min-height:0; flex-direction:column; background:#f8fafc; }
+    .design-panel.active { display:flex; }
+    .design-toolbar { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px 6px; }
+    .design-toolbar h2 { margin:0; font-size:18px; color:#1e293b; }
+    .design-add { border:0; border-radius:20px; padding:7px 14px; background:#1a6fd4; color:#fff; font-weight:700; cursor:pointer; }
+    .design-search-wrap { padding:0 10px 6px; }
+    .design-chips { display:flex; flex-wrap:wrap; gap:4px; padding:0 10px 6px; overflow:visible; }
+    .design-chip { white-space:nowrap; padding:5px 10px; border:1px solid #e2e8f0; border-radius:14px; background:#fff; color:#475569; cursor:pointer; font-weight:600; }
+    .design-chip.active { background:#1e293b; border-color:#1e293b; color:#fff; }
+    .design-chip[data-status="demo"].active { background:#f97316; border-color:#f97316; }
+    .design-chip[data-status="designing"].active { background:#1a6fd4; border-color:#1a6fd4; }
+    .design-chip[data-status="approved"].active { background:#10b981; border-color:#10b981; }
+    .design-chip[data-status="cancelled"].active { background:#ef4444; border-color:#ef4444; }
+    .design-filter-row { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:5px; padding:0 10px 6px; }
+    .design-list { flex:1; min-height:150px; overflow-y:auto; padding:0 10px 10px; }
+    .design-order-card { width:100%; display:block; margin:0 0 8px; padding:11px 12px; border:1px solid #e8edf3; border-radius:10px; background:#fff; color:#1e293b; text-align:left; cursor:pointer; }
+    .design-order-card:hover,.design-order-card.selected { border-color:#93c5fd; box-shadow:0 2px 8px rgba(41,98,255,.08); }
+    .design-card-top,.design-card-bottom { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .design-code { color:#1a6fd4; font-size:16px; font-weight:700; }
+    .design-status { border-radius:18px; padding:4px 10px; color:#fff; background:#94a3b8; font-size:12px; font-weight:700; }
+    .design-status.demo { background:#f97316; }.design-status.designing{background:#1a6fd4}.design-status.approved{background:#10b981}.design-status.cancelled{background:#ef4444}
+    .design-card-bottom { margin-top:7px; justify-content:flex-start; flex-wrap:wrap; color:#64748b; font-size:12px; }
+    .design-list-view { display:flex; min-height:0; flex:1; flex-direction:column; }
+    .design-list-view[hidden] { display:none; }
+    .design-editor { display:flex; min-height:0; flex:1; flex-direction:column; margin:0 10px 10px; padding:10px; border:1px solid #dfe5ee; border-radius:10px; background:#fff; }
+    .design-editor[hidden] { display:none; }
+    .design-editor-head { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .design-editor-head h3 { margin:0; font-size:16px; }
+    .design-editor .utility-form-grid { gap:6px; }
+    .design-editor .modal-input,.design-editor .modal-select { min-height:38px; padding:7px 10px; }
+    .design-editor .modal-textarea { min-height:72px; max-height:96px; }
+    .design-editor-actions { margin-top:auto; padding-top:8px; }
+    .crm-panel-status { min-height:18px; padding:0 2px 8px; color:#1767d9; font-size:12px; }
+    .pancake-panel { position:relative; background:#f3f5f9; font-family:var(--app-font-family); font-size:var(--ui-font-size); display:flex; flex-direction:column; overflow:hidden; }
+    .pancake-panel * { font-family:inherit; }
+    .pancake-panel.active { display:flex; flex-direction:column; padding:0; overflow:hidden; }
+    .pancake-scroll { flex:1; min-height:0; overflow:hidden; padding:4px 6px 4px; display:flex; flex-direction:column; gap:2px; }
+    .pancake-panel .utility-section { margin:0 0 0; border-radius:6px; padding:4px 6px; }
+    .pancake-panel .utility-section h3 { display:flex; align-items:center; gap:5px; font-size:12px; line-height:1.2; margin-bottom:1px; }
+    .pancake-panel .modal-input,.pancake-panel .modal-select { border:0; border-radius:4px; background:#f1f3f7; }
+    /* Ma don duoi "Da tai": chen nat theo noi dung, chiem it chieu cao nhat co the */
+    #pancake-current .mapping-state.linked ~ h4 { font-size:24px; color:#1767d9; font-weight:800; line-height:1.1; margin:1px 0 1px; }
+    #pancake-current .mapping-state { line-height:1.2; }
+    #pancake-current p { margin:1px 0 0; font-size:11px; color:#687386; line-height:1.3; }
+    /* Layout: Ma don + Khach hang + Thanh toan ep toi da; San pham chiem toan bo khoang con lai */
+    .pancake-lookup { margin-bottom:0; }
+    #pancake-current { flex:0 0 auto; padding:2px 6px; }
+    #pancake-current .utility-empty { padding:5px; }
+    #pancake-customer-block { flex:0 0 auto; padding:2px 6px; }
+    #pancake-customer-block h3 { margin-bottom:1px; }
+    #pancake-customer-block .utility-form-grid { gap:2px; }
+    #pancake-customer-block .pancake-customer-chip { margin-top:2px; padding:2px 6px; font-size:12px; }
+    #pancake-customer-block .pancake-customer-chip span { width:20px; height:20px; font-size:10px; }
+    .pancake-panel #pancake-customer-block .modal-input, .pancake-panel #pancake-customer-block .modal-select { min-height:24px; padding:3px 6px; }
+    /* San pham: to nhat, co scroll rieng tien nhap nhieu SP */
+    #pancake-products-block { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+    .pancake-panel #pancake-items { flex:1; min-height:0; max-height:none; overflow-y:auto; border:1px solid #e1e5ed; margin-top:2px; padding:0 3px; background:#fff; }
+    /* Ket qua tim san pham: de dang overlay len danh sach, chon xong bien mat khong day layout */
+    .pancake-panel #pancake-product-results { position:absolute; left:9px; right:9px; z-index:30; margin-top:0; max-height:230px; background:#fff; border:1px solid #dfe5ee; border-radius:9px; box-shadow:0 8px 20px rgba(15,23,42,.18); }
+    /* Thanh toan: thu hep */
+    #pancake-payment-block { flex:0 0 auto; padding:4px 6px; }
+    #pancake-payment-block h3 { margin-bottom:2px; }
+    #pancake-payment-block .pancake-payment-grid { gap:3px; }
+    #pancake-payment-block .pancake-notes-grid { margin-top:3px; }
+    #pancake-payment-block .pancake-notes-grid textarea { min-height:38px; }
+    .pancake-panel #pancake-payment-block .modal-input { min-height:28px; padding:4px 7px; }
+    .pancake-actionbar { flex:0 0 auto; display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:8px 10px; border-top:1px solid #dfe5ee; background:#fff; box-shadow:0 -4px 12px rgba(15,23,42,.06); z-index:2; }
+    .pancake-actionbar .modal-btn { width:100%; height:40px; }
+    .pancake-panel #pancake-create { border-radius:7px; background:#316bc5; }
+    .pancake-panel .modal-input,.pancake-panel .modal-select { min-height:34px; padding:6px 9px; }
+    .pancake-customer-chip { display:flex; align-items:center; gap:7px; margin-top:5px; padding:6px 8px; background:#edf3ff; border-radius:4px; font-weight:700; }
+    .pancake-customer-chip span { width:32px; height:32px; display:grid; place-items:center; border-radius:50%; background:#fff0d7; color:#f09b2d; }
+    .pancake-product-columns { display:grid; grid-template-columns:minmax(0,1fr) 68px 96px 110px 34px; gap:4px; padding:4px 6px; background:#f0f1f6; font-size:12px; font-weight:700; }
+    .pancake-product-columns span:not(:first-child) { text-align:right; }
+    .pancake-payment-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+    .pancake-payment-grid label { display:grid; gap:4px; color:#687386; font-size:var(--ui-font-size); }
+    .pancake-payment-grid .wide { grid-column:1/-1; }
+    .pancake-notes { grid-column:1/-1; }
+    .pancake-notes summary { cursor:pointer; color:#667085; font-size:var(--ui-font-size); font-weight:700; }
+    .pancake-notes-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px; }
+    .pancake-notes-grid textarea { min-height:58px; }
+    .pancake-panel .utility-summary { grid-template-columns:repeat(4,1fr); gap:5px; margin-top:7px !important; }
+    .pancake-panel .utility-summary div { display:grid; gap:2px; padding:6px; border-radius:5px; background:#f7f8fb; }
+    .pancake-panel .utility-summary .total { border:1px solid #bfdbfe; background:#eff6ff; color:#1d4ed8; padding:6px; }
+    .pancake-panel .utility-summary .total b { font-size:14px; color:#1d4ed8; }
+    .pancake-lookup { margin-bottom:6px; }
+    .pancake-lookup summary { cursor:pointer; padding:6px 8px; border:1px solid #dfe5ee; border-radius:6px; background:#fff; font-weight:700; font-size:var(--ui-font-size); }
+    .update-version-line { margin: 4px 0 14px; color: #667085; font-size: 13px; }
+    .update-version-line strong { color: #1767d9; }
+    .update-notes { max-height: 260px; overflow-y: auto; padding: 14px; border-radius: 12px; background: #f7f9fc; color: #344054; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+    .update-notes:empty { display: none; }
+    /* Chuẩn nút chung cho toàn bộ popup/panel Nhà Yến. Khai báo cuối để không bị theme cũ ghi đè. */
+    .panel-box .modal-btn,
+    .modal-box .modal-btn,
+    #crm-utility-panel .modal-btn {
+      min-height:38px; padding:8px 14px; border-radius:8px;
+      font-family:Quicksand,sans-serif; font-size:13px; font-weight:650;
+      box-shadow:none; transform:none;
+    }
+    .panel-box .modal-btn.save,
+    .modal-box .modal-btn.save,
+    #crm-utility-panel .modal-btn.save { color:#fff; background:#1767d9; border:1px solid #1767d9; }
+    .panel-box .modal-btn.save:hover,
+    .modal-box .modal-btn.save:hover,
+    #crm-utility-panel .modal-btn.save:hover { background:#0f57be; filter:none; }
+    .panel-box .modal-btn.cancel,
+    .modal-box .modal-btn.cancel,
+    #crm-utility-panel .modal-btn.cancel { color:#1767d9; background:#fff; border:1px solid #b8cff0; }
+    .panel-box .modal-btn.warn,
+    .modal-box .modal-btn.warn,
+    #crm-utility-panel .modal-btn.warn { color:#d92d45; background:#fff; border:1px solid #ef5267; }
+    @media (max-width: 1080px) {
+      #app-shell { grid-template-columns: var(--profile-rail) 1fr var(--utility-panel-width, 0px); }
+      .filter-row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 
 <body class="dark-mode">
   <div id="app-shell">
-    <div id="sidebar">
-      <div id="brand-badge">9M</div>
+    <div id="profile-rail">
       <div id="profiles-list"></div>
-      <button class="profile-btn" id="btn-add-profile" title="Thêm tài khoản">
+      <button class="profile-btn" id="btn-add-profile" title="Thêm nick Zalo" aria-label="Thêm nick Zalo">
         <svg viewBox="0 0 24 24">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
       </button>
-      <div class="sidebar-spacer"></div>
-      <button class="tool-btn launcher" id="btn-tools-launcher" title="Mở bảng công cụ">
-        <svg viewBox="0 0 24 24">
-          <path d="M4 4h6v6H4z"></path>
-          <path d="M14 4h6v6h-6z"></path>
-          <path d="M4 14h6v6H4z"></path>
-          <path d="M14 14h6v6h-6z"></path>
-        </svg>
-      </button>
-
+      <nav class="sidebar-nav" aria-label="Công cụ Nhà Yến Zalo">
+        <button class="tool-btn nav-tool" data-tool-action="zalo-users" title="Người dùng Zalo" aria-label="Người dùng Zalo"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21v-2a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v2"/><path d="M17 11a4 4 0 0 1 5 4v2"/></svg><span id="zalo-users-running-badge" class="badge" aria-label="Tác vụ người dùng Zalo đang chạy">…</span></button>
+        <button class="tool-btn nav-tool" data-tool-action="zalo-groups" title="Nhóm Zalo" aria-label="Nhóm Zalo"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20v-2a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2"/><path d="M14 14h2a4 4 0 0 1 4 4v2"/></svg><span id="zalo-groups-running-badge" class="badge" aria-label="Tác vụ nhóm Zalo đang chạy">…</span></button>
+        <button class="tool-btn nav-tool" data-tool-action="quick-replies" title="Tin nhắn nhanh" aria-label="Tin nhắn nhanh"><svg viewBox="0 0 24 24"><path d="M21 15a3 3 0 0 1-3 3H8l-5 3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3z"/><path d="M8 8h8M8 12h5"/></svg></button>
+        <button class="tool-btn nav-tool" data-tool-action="update" title="Cập nhật" aria-label="Cập nhật"><svg viewBox="0 0 24 24"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M6.1 9a7 7 0 0 1 11.7-2.6L20 11M4 13l2.2 4.6A7 7 0 0 0 17.9 15"/></svg></button>
+        <button class="tool-btn nav-tool" data-tool-action="remote-control" title="Remote Control" aria-label="Remote Control"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="m9 10 2 2 4-4"/></svg></button>
+      </nav>
     </div>
+    <header id="app-topbar">
+      <span class="topbar-brand"><img src="brand-logo.png" alt="">Nhà Yến Zalo<button id="app-version-badge" class="topbar-version" type="button" data-tool-action="update" title="Phiên bản ứng dụng · bấm để kiểm tra cập nhật" aria-label="Phiên bản ứng dụng, bấm để kiểm tra cập nhật"></button></span>
+      <div class="topbar-actions">
+        <button id="pancake-topbar-create" class="topbar-primary" type="button" title="Tạo đơn Pancake nhanh" aria-label="Tạo đơn Pancake">Tạo đơn</button>
+        <button id="quick-replies-topbar" class="topbar-primary" type="button" title="Mở tin nhắn nhanh" aria-label="Mở tin nhắn nhanh" aria-expanded="false">Tin nhắn nhanh</button>
+        <button id="send-video-topbar" class="topbar-primary" type="button" title="Chọn video cho hội thoại hiện tại" aria-label="Gửi video">Gửi video</button>
+        <button id="design-orders-topbar" class="topbar-primary" type="button" title="Mở đơn thiết kế" aria-label="Mở đơn thiết kế" aria-expanded="false">Đơn thiết kế</button>
+        <button id="pancake-orders-topbar" class="topbar-primary" type="button" title="Mở Pancake" aria-label="Mở Pancake" aria-expanded="false">Pancake</button>
+        <button id="quote-panel-toggle" class="topbar-primary" type="button" title="Mở báo giá" aria-label="Mở báo giá" aria-expanded="false">Báo giá</button>
+        <button id="app-more-button" class="topbar-more" type="button" title="Cỡ chữ" aria-label="Mở cỡ chữ" aria-expanded="false" aria-controls="app-more-menu">Aᴀ</button>
+        <div id="pancake-created-popup" role="status" aria-live="polite">
+          <span id="pancake-created-label" class="created-label">Đã tạo mã đơn</span>
+          <span id="pancake-created-code" class="created-code"></span>
+          <button id="pancake-created-copy" type="button">Sao chép</button>
+          <button id="pancake-created-cancel" type="button" hidden>Hủy</button>
+          <button id="pancake-created-close" type="button" aria-label="Đóng">✕</button>
+        </div>
+        <div id="app-more-menu" role="dialog" aria-label="Tùy chọn hiển thị" hidden>
+          <div class="font-control-head"><span>Cỡ chữ</span><output id="font-size-value" for="font-size-range">16px</output></div>
+          <input id="font-size-range" type="range" min="12" max="24" step="1" value="16" aria-label="Cỡ chữ ứng dụng">
+          <div class="font-control-limits"><span>12px</span><span>24px</span></div>
+        </div>
+      </div>
+    </header>
+    <aside id="crm-utility-panel" class="collapsed" aria-label="Nghiệp vụ Nhà Yến">
+      <div class="utility-head"><strong id="utility-panel-title">Báo giá thiệp cưới</strong><button id="crm-connection-toggle" class="crm-status-chip" type="button" hidden aria-expanded="false">CRM ✓</button><button id="pancake-refresh-current" class="modal-btn cancel" type="button" hidden title="Bắt lại mã đơn từ tên hội thoại hiện tại">Lấy mã đơn</button><button id="utility-panel-hide" class="modal-btn cancel" type="button" aria-label="Đóng panel">Đóng</button></div>
+      <div id="utility-context" class="utility-context">Chọn một nick và mở cuộc trò chuyện Zalo.</div>
+      <div id="crm-connection-box" class="crm-connect" hidden>
+        <div id="crm-login-form">
+          <input id="crm-base-url" class="modal-input" value="https://nhayencrm.com" placeholder="Địa chỉ Nhà Yến CRM">
+          <input id="crm-identifier" class="modal-input" placeholder="Tài khoản CRM" style="margin-top:6px">
+          <input id="crm-password" class="modal-input" type="password" placeholder="Mật khẩu" style="margin-top:6px">
+          <button id="crm-login" class="modal-btn save" type="button" style="margin-top:7px">Kết nối CRM</button>
+        </div>
+        <div id="crm-connected" hidden><div class="crm-connected-row"><select id="crm-account-select" class="modal-select"></select><button id="crm-logout" class="modal-btn cancel" type="button">Thoát</button></div></div>
+        <div id="crm-status" class="utility-status" role="status"></div>
+      </div>
+      <section id="utility-pane-quote" class="utility-pane active" aria-labelledby="utility-tab-quote">
+        <span class="utility-label">Loại giấy</span>
+        <div class="quote-paper-grid">
+          <button class="quote-paper active" type="button" data-paper-type="nhunu"><b>Ánh nhũ thơm</b><span>Lấp lánh · nước hoa</span></button>
+          <button class="quote-paper" type="button" data-paper-type="standard"><b>Tiêu chuẩn</b><span>Không mùi</span></button>
+          <button class="quote-paper" type="button" data-paper-type="gap3in1"><b>Gập 3in1</b><span>1 tờ gập 3 · có ngăn đựng tiền</span></button>
+        </div>
+        <label class="utility-label" for="quote-quantity">Số lượng (bộ)</label>
+        <input id="quote-quantity" class="modal-input" type="number" min="50" step="10" placeholder="Tối thiểu 50 bộ">
+        <label class="quote-toggle"><input id="quote-emboss" type="checkbox"> Ép kim / dập nổi</label>
+        <div id="quote-emboss-fields" hidden><label class="utility-label" for="quote-emboss-positions">Số vị trí</label><input id="quote-emboss-positions" class="modal-input" type="number" min="1" value="1"></div>
+        <div class="quote-result" aria-live="polite">
+          <div class="quote-result-row"><span>Đơn giá</span><strong id="quote-unit-price">—</strong></div>
+          <div class="quote-result-row"><span>Tiền giấy</span><strong id="quote-paper-cost">—</strong></div>
+          <div class="quote-result-row"><span>Ép kim</span><strong id="quote-emboss-cost">—</strong></div>
+          <div class="quote-result-row total"><span>Tổng chi phí</span><strong id="quote-total">—</strong></div>
+          <div class="quote-result-row"><span>Giá thành</span><strong id="quote-average">—</strong></div>
+        </div>
+        <div class="utility-actions"><button id="quote-insert" class="modal-btn save" type="button" disabled>Chèn vào ô soạn tin</button><button id="quote-copy" class="modal-btn cancel" type="button" disabled>Copy</button></div>
+        <div id="quote-status" class="utility-status" role="status"></div>
+      </section>
+      <section id="utility-pane-design" class="utility-pane design-panel" aria-label="Đơn thiết kế">
+        <div id="design-list-view" class="design-list-view">
+          <div class="design-toolbar"><h2>Đơn thiết kế</h2><button id="design-new" class="design-add" type="button">＋ Tạo đơn mới</button></div>
+          <div class="design-search-wrap"><input id="design-search" class="modal-input" type="search" placeholder="Tìm theo mã đơn..."></div>
+          <div class="design-chips" role="group" aria-label="Lọc trạng thái đơn">
+            <button class="design-chip active" data-status="" type="button">Tất cả</button><button class="design-chip" data-status="demo" type="button">Chưa demo</button><button class="design-chip" data-status="designing" type="button">Thiết kế</button><button class="design-chip" data-status="approved" type="button">Chốt in</button><button class="design-chip" data-status="cancelled" type="button">Huỷ</button>
+          </div>
+          <div class="design-filter-row"><select id="design-filter-designer" class="modal-select"><option value="">Tất cả Designer</option></select><input id="design-date-from" class="modal-input" type="date" aria-label="Từ ngày"><input id="design-date-to" class="modal-input" type="date" aria-label="Đến ngày"></div>
+          <div id="design-list" class="design-list" aria-live="polite"></div>
+        </div>
+        <div id="design-editor" class="design-editor" hidden>
+          <div class="design-editor-head"><button id="design-back" class="modal-btn cancel" type="button" aria-label="Quay lại danh sách">← Quay lại</button><h3 id="design-current-group">Tạo đơn thiết kế</h3></div>
+          <div class="utility-form-grid">
+            <input id="design-code" class="modal-input wide" placeholder="Mã đơn, ví dụ D300805">
+            <select id="design-status" class="modal-select"><option value="demo">Chưa demo</option><option value="designing">Thiết kế</option><option value="approved">Chốt in</option><option value="cancelled">Hủy</option></select>
+            <select id="design-designer" class="modal-select"><option value="">Chưa gán</option></select>
+            <input id="design-deadline" class="modal-input" type="date">
+            <input id="design-files" class="modal-input" type="number" min="0" placeholder="Số file">
+            <textarea id="design-note" class="modal-textarea wide" placeholder="Ghi chú"></textarea>
+          </div>
+          <div class="design-editor-actions"><button id="design-save" class="modal-btn save" type="button" style="width:100%">Lưu</button><div id="design-status-message" class="crm-panel-status" role="status"></div></div>
+        </div>
+      </section>
+      <section id="utility-pane-orders" class="utility-pane pancake-panel" aria-label="Pancake">
+        <div class="pancake-scroll">
+        <details class="pancake-lookup"><summary>Tìm đơn Pancake khác</summary><div class="utility-section"><div class="row"><input id="pancake-search" class="modal-input" placeholder="Mã đơn hoặc khách hàng"><button id="pancake-refresh" class="modal-btn cancel" type="button">Tìm</button></div><div id="pancake-list" class="utility-search-results"></div></div></details>
+        <div id="pancake-current" class="utility-section"><div class="utility-empty">Mở hội thoại bắt đầu bằng D hoặc tìm mã đơn.</div></div>
+        <div id="pancake-customer-block" class="utility-section">
+          <h3>♙ Khách hàng</h3>
+          <div class="utility-form-grid">
+            <input id="pancake-customer" class="modal-input" placeholder="Tên khách hàng">
+            <input id="pancake-phone" class="modal-input" placeholder="Số điện thoại">
+            <input id="pancake-address" class="modal-input wide" placeholder="Địa chỉ">
+            <select id="pancake-warehouse" class="modal-select wide"><option value="">Chọn kho Pancake</option></select>
+          </div>
+          <div class="pancake-customer-chip"><span>NY</span><b id="pancake-customer-chip-name">Chưa xác định khách hàng</b></div>
+        </div>
+        <div id="pancake-products-block" class="utility-section">
+          <h3>🛒 Sản phẩm</h3>
+          <div class="pancake-product-columns"><span>Tên SP</span><span>SL</span><span>Đơn giá</span><span>Thành tiền</span><span aria-hidden="true"></span></div>
+          <input id="pancake-product-search" class="modal-input" placeholder="Tìm sản phẩm">
+          <div id="pancake-product-results" class="utility-search-results" hidden></div>
+          <div id="pancake-items"></div>
+        </div>
+        <div id="pancake-payment-block" class="utility-section">
+          <h3>▣ Thanh toán</h3>
+          <div class="pancake-payment-grid">
+            <label>Phí giao hàng<input id="pancake-shipping" class="modal-input" type="number" min="0" value="0"></label>
+            <label>Giảm giá<input id="pancake-discount" class="modal-input" type="number" min="0" value="0"></label>
+            <label>Đã đặt cọc<input id="pancake-deposit" class="modal-input" type="number" min="0" value="0"></label>
+            <details class="pancake-notes"><summary>Ghi chú khác (ít sử dụng)</summary><div class="pancake-notes-grid"><label>Ghi chú nội bộ<textarea id="pancake-note" class="modal-textarea"></textarea></label><label>Ghi chú in<textarea id="pancake-print-note" class="modal-textarea"></textarea></label></div></details>
+          </div>
+          <div id="pancake-summary" class="utility-summary" style="margin-top:10px"></div>
+        </div>
+        </div>
+        <div class="pancake-actionbar"><button id="pancake-reset" class="modal-btn cancel" type="button">Thiết lập lại</button><button id="pancake-create" class="modal-btn save" type="button" title="Lưu thay đổi lên đơn Pancake đã tải">Lưu thay đổi</button></div>
+      </section>
+    </aside>
   </div>
 
-  <div id="tools-overlay" aria-hidden="true">
+  <div id="tools-overlay" aria-hidden="true" hidden>
     <div class="tools-scrim" data-tools-close="true"></div>
-    <div class="tools-panel" role="dialog" aria-label="Bảng công cụ 9Meta">
+    <div class="tools-panel" role="dialog" aria-label="Công cụ cũ">
       <div class="tools-head">
         <div>
-          <h3 class="tools-title">Bảng công cụ 9Meta</h3>
-          <p class="tools-subtitle">9 chức năng chính trong một launcher gọn gàng.</p>
+          <h3 class="tools-title">Công cụ cũ</h3>
+          <p class="tools-subtitle">10 chức năng chính trong một launcher gọn gàng.</p>
         </div>
         <button class="modal-btn cancel" id="tools-close">Đóng</button>
       </div>
       <div class="tools-grid">
-        <button class="tool-tile" data-tool-action="dashboard"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
+        <button class="tool-tile" data-legacy-action="dashboard"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
               <path d="M3 13h8V3H3z"></path>
               <path d="M13 21h8v-6h-8z"></path>
               <path d="M13 10h8V3h-8z"></path>
               <path d="M3 21h8v-4H3z"></path>
             </svg></span><strong>Dashboard</strong><span>Thống kê hoạt động</span></button>
-        <button class="tool-tile" data-tool-action="workspaces"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
+        <button class="tool-tile" data-legacy-action="workspaces"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
               <path d="M3 7l9-4 9 4-9 4-9-4z"></path>
               <path d="M3 12l9 4 9-4"></path>
               <path d="M3 17l9 4 9-4"></path>
@@ -873,7 +1596,7 @@
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            </svg></span><strong>CRM mini</strong><span>Quản lý contact</span></button>
+            </svg></span><strong>Danh bạ cũ</strong><span>Không còn sử dụng</span></button>
         <button class="tool-tile" data-tool-action="campaigns"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
               <path d="M3 11l18-5v12L3 13z"></path>
               <path d="M11 13.5V19a2 2 0 0 1-2 2H7"></path>
@@ -884,12 +1607,18 @@
               <path d="M2 12h4"></path>
               <path d="M18 12h4"></path>
               <circle cx="12" cy="12" r="3"></circle>
-            </svg></span><strong>AI Rewrite</strong><span>Viết lại tin nhắn</span></button>
+            </svg></span><strong>Soạn thảo cũ</strong><span>Không còn sử dụng</span></button>
         <button class="tool-tile" data-tool-action="quick-replies"><span class="tool-tile-icon"><svg
               viewBox="0 0 24 24">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               <line x1="9" y1="10" x2="15" y2="10"></line>
             </svg></span><strong>Tin mẫu</strong><span>Quick replies /1 /2</span></button>
+        <button class="tool-tile" data-tool-action="zalo-groups"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
+              <circle cx="8" cy="8" r="3"></circle>
+              <circle cx="17" cy="9" r="2.5"></circle>
+              <path d="M2 20v-2a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2"></path>
+              <path d="M14 14h2a4 4 0 0 1 4 4v2"></path>
+            </svg></span><strong>Xuất nhóm Zalo</strong><span>Quét profile đang mở</span></button>
         <button class="tool-tile" data-tool-action="update"><span class="tool-tile-icon"><svg viewBox="0 0 24 24">
               <path d="M21 2v6h-6"></path>
               <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
@@ -936,6 +1665,81 @@
             <polyline points="23 4 23 10 17 10"></polyline>
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
           </svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="zalo-groups-overlay" class="overlay">
+    <div class="panel-box wide tall-panel">
+      <div class="panel-head">
+        <h3 class="panel-title">Nhóm Zalo</h3><div class="row"><button id="zalo-groups-minimize" class="modal-btn cancel" type="button">Hạ xuống</button><button class="modal-btn cancel"
+          data-close="zalo-groups-overlay">Đóng</button></div>
+      </div>
+      <div class="panel-body">
+      <label class="download-meta" for="zalo-groups-profile-select">Nick Zalo thực hiện</label>
+      <select id="zalo-groups-profile-select" class="modal-select"></select>
+      <p id="zalo-groups-profile" class="download-meta">Chọn nick Zalo để bắt đầu.</p>
+      <div class="card mb-12">
+        <div class="section-head mb-12">
+          <h4 class="section-title">Tiến độ</h4><span id="zalo-groups-status" class="pill">Chưa chạy</span>
+        </div>
+        <div id="zalo-groups-progress" class="muted">Chưa có dữ liệu.</div>
+      </div>
+      <div id="zalo-groups-errors" class="list-scroll mb-12" style="max-height:180px;"></div>
+      <div id="zalo-groups-browser" hidden>
+        <div class="group-filter-bar">
+          <input id="zalo-groups-search" class="modal-input" type="search" aria-label="Tìm theo tên nhóm"
+            placeholder="Tìm theo tên nhóm, ví dụ: đang giao">
+          <select id="zalo-groups-sort" class="modal-select" aria-label="Sắp xếp danh sách nhóm">
+            <option value="name-asc">Tên nhóm: A → Z</option>
+            <option value="name-desc">Tên nhóm: Z → A</option>
+            <option value="created-asc">Nhóm cũ nhất trước</option>
+            <option value="created-desc">Nhóm mới nhất trước</option>
+            <option value="members-asc">Thành viên: ít → nhiều</option>
+            <option value="members-desc">Thành viên: nhiều → ít</option>
+            <option value="source">Thứ tự gốc từ Zalo</option>
+          </select>
+          <button id="zalo-groups-clear-filter" class="modal-btn cancel">Xóa lọc</button>
+        </div>
+        <div class="section-head mb-12">
+          <div class="row"><label><input id="zalo-groups-select-visible" type="checkbox"> Chọn các nhóm đang hiển thị</label><button id="zalo-groups-select-50" class="modal-btn cancel" type="button">Chọn 50</button></div>
+          <span id="zalo-groups-result-count" class="muted"></span>
+        </div>
+        <div id="zalo-groups-results" class="group-results mb-12" role="list"></div>
+        <div class="group-action-buttons">
+          <button id="zalo-groups-send-open" class="modal-btn save">Gửi tin nhóm đã chọn</button>
+          <button id="zalo-groups-leave-open" class="modal-btn warn">Rời nhóm đã chọn</button>
+        </div>
+        <div id="zalo-groups-action-panel" class="card group-action-config" hidden>
+          <div class="section-head">
+            <h4 id="zalo-groups-action-title" class="section-title"></h4>
+            <button id="zalo-groups-action-close" class="modal-btn cancel">Đóng</button>
+          </div>
+          <p id="zalo-groups-action-summary" class="muted"></p>
+          <div id="zalo-groups-send-config">
+            <textarea id="zalo-groups-message" class="modal-textarea" maxlength="2000"
+              placeholder="Nhập nội dung gửi vào các nhóm đã chọn"></textarea>
+            <label class="quote-toggle"><input id="zalo-groups-message-consent" type="checkbox"> Tôi xác nhận các nhóm này đã đồng ý nhận tin.</label>
+            <div class="grid-2">
+              <label class="muted">Nghỉ tối thiểu (giây)<input id="zalo-groups-delay-min" class="modal-input" type="number" min="8" max="120" value="8"></label>
+              <label class="muted">Nghỉ tối đa (giây)<input id="zalo-groups-delay-max" class="modal-input" type="number" min="8" max="120" value="20"></label>
+            </div>
+          </div>
+          <div id="zalo-groups-leave-config" hidden>
+            <p class="muted">Thao tác không thể hoàn tác. Chính sách: nghỉ 5–10 giây mỗi nhóm, nghỉ 1–2 phút sau mỗi 5 nhóm và tối đa 1.000 nhóm/ngày/profile.</p>
+          </div>
+          <div id="zalo-groups-action-progress" class="muted mt-16" aria-live="polite">Chưa chạy.</div>
+          <div id="zalo-groups-action-log" class="group-action-log"></div>
+          <div class="group-action-buttons">
+            <button id="zalo-groups-action-run" class="modal-btn save">Bắt đầu</button>
+            <button id="zalo-groups-action-stop" class="modal-btn cancel" disabled>Dừng</button>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <button id="zalo-groups-start" class="modal-btn save">Quét</button>
+        <button id="zalo-groups-cancel" class="modal-btn cancel" disabled>Dừng</button>
+      </div>
       </div>
     </div>
   </div>
@@ -989,7 +1793,7 @@
   <div id="crm-overlay" class="overlay">
     <div class="panel-box wide">
       <div class="panel-head">
-        <h3 class="panel-title">👥 CRM mini theo profile</h3><button class="modal-btn cancel"
+        <h3 class="panel-title">👥 Danh bạ cũ theo profile</h3><button class="modal-btn cancel"
           data-close="crm-overlay">Đóng</button>
       </div>
       <div class="grid-2">
@@ -1035,12 +1839,12 @@
   <div id="campaign-overlay" class="overlay">
     <div class="panel-box wide">
       <div class="panel-head">
-        <h3 class="panel-title">📣 Campaign mini</h3><button class="modal-btn cancel"
+        <h3 class="panel-title">Gửi tin cá nhân</h3><button class="modal-btn cancel"
           data-close="campaign-overlay">Đóng</button>
       </div>
       <div class="grid-2">
         <div class="card">
-          <h4 class="section-title mb-12">Tạo chiến dịch Zalo</h4>
+          <h4 class="section-title mb-12">Soạn nội dung gửi</h4>
           <div class="chip-row mb-12">
             <span class="chip success">Chỉ áp dụng Zalo</span>
             <span class="chip hot">Gửi qua nhiều tài khoản Zalo</span>
@@ -1134,17 +1938,117 @@
     </div>
   </div>
 
+  <div id="popup-resizer" title="Kéo để đổi bề rộng popup" hidden></div>
+
   <div id="quick-replies-overlay" class="overlay">
-    <div class="panel-box mid">
+    <div class="panel-box wide">
       <div class="panel-head">
-        <h3 class="panel-title">💬 Tin nhắn mẫu</h3><button class="modal-btn cancel"
-          data-close="quick-replies-overlay">Đóng</button>
+        <h3 class="panel-title">Tin nhắn nhanh</h3>
+        <div class="row"><button id="quick-replies-minimize" class="modal-btn cancel" type="button">Hạ xuống</button><button
+            class="modal-btn cancel" data-close="quick-replies-overlay">Đóng</button></div>
       </div>
-      <p class="download-meta">Nhập <code>/1</code>, <code>/2</code> ... trong ô chat để chèn và gửi mẫu.</p>
-      <div id="quick-replies-list" class="list-scroll mb-16"></div>
-      <div class="row mt-16"><textarea id="quick-reply-input" class="modal-textarea"
-          placeholder="Nhập nội dung quick reply mới" style="min-height:72px;margin:0;"></textarea><button
-          class="modal-btn save" id="quick-reply-add">Thêm</button></div>
+      <div class="panel-body">
+        <p class="download-meta" style="color:#111;">Gõ <code>\từkhóa</code> trong ô chat Zalo để chèn mẫu. Sau đó nhấn enter sẽ hiện ra tin nhắn nhanh</p>
+        <div class="filter-row">
+          <input id="quick-replies-search" class="modal-input" type="search" placeholder="Tìm theo ký tự tắt hoặc nội dung" aria-label="Tìm tin nhắn nhanh">
+        </div>
+        <p id="quick-replies-status" class="download-meta" role="status" aria-live="polite">Chưa có mẫu tin nhắn.</p>
+        <div class="table-wrap mb-12">
+          <table class="data-table" id="quick-replies-table">
+            <thead>
+              <tr><th class="col-stt">STT</th><th>Ký tự tắt</th><th class="col-image">Ảnh</th><th>Nội dung</th><th class="col-actions">Hành động</th></tr>
+            </thead>
+            <tbody id="quick-replies-rows"></tbody>
+          </table>
+        </div>
+        <div class="row pager-row" id="quick-replies-pager" hidden></div>
+        <div class="row mt-16">
+          <button id="quick-reply-create" class="modal-btn save">Thêm mẫu</button>
+          <button id="quick-reply-import-csv" class="modal-btn cancel">Nhập CSV</button>
+          <button id="quick-reply-export-csv" class="modal-btn cancel">Xuất CSV</button>
+          <input id="quick-reply-csv-file" type="file" accept=".csv,text/csv" hidden>
+        </div>
+        <div id="quick-reply-editor" class="card qr-editor" hidden>
+          <div class="section-head"><strong id="quick-reply-editor-title">Thêm mẫu tin nhắn</strong><button id="quick-reply-editor-cancel" class="modal-btn cancel" type="button">Hủy</button></div>
+          <div class="filter-row mt-16">
+            <label class="download-meta" for="quick-reply-keyword">Ký tự tắt</label>
+            <input id="quick-reply-keyword" class="modal-input" placeholder="\baogia" aria-label="Ký tự tắt">
+            <button id="quick-reply-image" class="modal-btn cancel" type="button">Chọn ảnh</button>
+            <button id="quick-reply-image-remove" class="modal-btn cancel" type="button">Bỏ ảnh</button>
+          </div>
+          <p id="quick-reply-image-status" class="download-meta">Không kèm ảnh.</p>
+          <div id="quick-reply-image-preview" class="qr-image-preview" hidden><img id="quick-reply-image-thumb" alt="Xem trước ảnh"></div>
+          <textarea id="quick-reply-input" class="modal-textarea" placeholder="Nhập nội dung tin nhắn mẫu" style="min-height:96px;margin:0;"></textarea>
+          <p id="quick-reply-editor-error" class="qr-error" hidden></p>
+          <div class="row mt-16">
+            <button id="quick-reply-add" class="modal-btn save">Lưu mẫu</button>
+            <button id="quick-reply-test" class="modal-btn cancel" type="button">Xem mẫu</button>
+          </div>
+        </div>
+        <div id="quick-reply-confirm" class="qr-confirm" hidden>
+          <p id="quick-reply-confirm-text" class="download-meta"></p>
+          <div class="row"><button id="quick-reply-confirm-yes" class="modal-btn warn">Xóa mẫu</button><button id="quick-reply-confirm-no" class="modal-btn cancel">Giữ lại</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="video-library-overlay" class="overlay">
+    <div class="panel-box wide">
+      <div class="panel-head"><div><h3 class="panel-title">Thư viện video</h3><p class="download-meta">Dùng chung toàn ứng dụng · tối đa 20 MB/video</p></div><div class="row"><button id="video-library-minimize" class="modal-btn cancel" type="button">Hạ xuống</button><button class="modal-btn cancel" data-close="video-library-overlay">Đóng</button></div></div>
+      <div class="panel-body">
+        <div class="group-filter-bar"><button id="video-library-add" class="modal-btn save" type="button">＋ Thêm video</button><button id="video-library-folder" class="modal-btn cancel" type="button" title="Mở thư mục video" aria-label="Mở thư mục video">📁</button><button id="video-library-set-root" class="modal-btn cancel" type="button" title="Đổi thư mục lưu video">Đổi thư mục…</button></div>
+        <p id="video-library-status" class="download-meta" role="status">Đang đọc thư viện…</p>
+        <div id="video-library-confirm" class="qr-confirm" hidden>
+          <span id="video-library-confirm-text">Xóa video?</span>
+          <span class="row"><button id="video-library-confirm-yes" class="modal-btn danger" type="button">Xóa</button><button id="video-library-confirm-no" class="modal-btn cancel" type="button">Giữ lại</button></span>
+        </div>
+        <div id="video-library-list" class="list-scroll" style="max-height:65vh"></div>
+      </div>
+      <div class="panel-footer"><span class="muted">Chọn một video để đưa vào ô chat; ứng dụng không tự gửi.</span><button id="video-library-stage" class="modal-btn save" type="button" disabled>Đưa vào hội thoại</button></div>
+    </div>
+  </div>
+
+  <div id="zalo-users-overlay" class="overlay">
+    <div class="panel-box wide tall-panel">
+      <div class="panel-head"><h3 class="panel-title">Người dùng Zalo</h3><div class="row"><button id="zalo-users-minimize" class="modal-btn cancel" type="button">Hạ xuống</button><button class="modal-btn cancel" data-close="zalo-users-overlay">Đóng</button></div></div>
+      <div class="panel-body"><label class="download-meta" for="zalo-users-profile-select">Nick Zalo thực hiện</label><select id="zalo-users-profile-select" class="modal-select"></select><p id="zalo-users-progress" class="download-meta">Chọn nick rồi quét danh sách bạn bè.</p><div class="filter-row"><input id="zalo-users-search" class="modal-input" type="search" placeholder="Tìm theo tên hoặc userId"><select id="zalo-users-sort" class="modal-select"><option value="name-asc">Tên A → Z</option><option value="name-desc">Tên Z → A</option></select><select id="zalo-users-inactivity" class="modal-select" aria-label="Lọc theo số ngày im lặng"><option value="0">Tất cả thời gian</option><option value="30">Im lặng từ 30 ngày</option><option value="60">Im lặng từ 60 ngày</option><option value="90">Im lặng từ 90 ngày</option><option value="180">Im lặng từ 180 ngày</option><option value="365">Im lặng từ 365 ngày</option></select></div><p class="download-meta">Khi lọc ngày im lặng, người có thời gian tương tác “Không rõ” sẽ tự động bị loại để tránh hủy nhầm.</p><div class="row"><label class="download-meta"><input id="zalo-users-select-all" type="checkbox"> Chọn tất cả đang hiển thị</label><button id="zalo-users-select-50" class="modal-btn cancel" type="button">Chọn 50</button></div><div id="zalo-users-results" class="group-results mb-12"><div class="empty-state">Chưa có dữ liệu.</div></div><p id="zalo-users-action-status" class="download-meta" role="status" aria-live="polite"></p><div class="row"><button id="zalo-users-scan" class="modal-btn save">Quét</button><button id="zalo-users-send-open" class="modal-btn save" disabled>Gửi tin đã chọn</button><button id="zalo-users-unfriend-open" class="modal-btn warn" disabled>Hủy kết bạn</button></div></div>
+    </div>
+  </div>
+
+  <div id="personal-messages-overlay" class="overlay">
+    <div class="panel-box wide">
+      <div class="panel-head"><h3 class="panel-title">Gửi tin cá nhân</h3><button class="modal-btn cancel" data-close="personal-messages-overlay">Đóng</button></div>
+      <div class="panel-body"><p id="personal-message-summary" class="download-meta">Hãy quét và chọn người dùng trước.</p><textarea id="personal-message-text" class="modal-textarea" maxlength="2000" placeholder="Nội dung tin nhắn"></textarea><label class="quote-toggle"><input id="personal-message-consent" type="checkbox"> Tôi xác nhận người nhận đã đồng ý nhận tin.</label><div class="row"><label class="muted">Nghỉ từ <input id="personal-delay-min" class="modal-input" type="number" min="8" max="120" value="8"></label><label class="muted">đến <input id="personal-delay-max" class="modal-input" type="number" min="8" max="120" value="20"> giây</label></div><div id="personal-message-log" class="group-action-log"></div><div class="row mt-16"><button id="personal-message-run" class="modal-btn save">Bắt đầu gửi</button><button id="personal-message-stop" class="modal-btn cancel" disabled>Dừng</button></div></div>
+    </div>
+  </div>
+
+  <div id="group-messages-overlay" class="overlay">
+    <div class="panel-box wide">
+      <div class="panel-head"><h3 class="panel-title">Gửi tin nhóm</h3><button class="modal-btn cancel" data-close="group-messages-overlay">Đóng</button></div>
+      <div class="panel-body"><p id="group-message-summary" class="download-meta">Hãy quét và chọn nhóm trước.</p><textarea id="group-message-text" class="modal-textarea" maxlength="2000" placeholder="Nội dung tin nhắn nhóm"></textarea><label class="quote-toggle"><input id="group-message-consent" type="checkbox"> Tôi xác nhận các nhóm này đã đồng ý nhận tin.</label><div class="row"><label class="muted">Nghỉ từ <input id="group-message-delay-min" class="modal-input" type="number" min="8" max="120" value="8"></label><label class="muted">đến <input id="group-message-delay-max" class="modal-input" type="number" min="8" max="120" value="20"> giây</label></div><div id="group-message-log" class="group-action-log"></div><div class="row mt-16"><button id="group-message-run" class="modal-btn save">Bắt đầu gửi</button><button id="group-message-stop" class="modal-btn cancel" disabled>Dừng</button></div></div>
+    </div>
+  </div>
+
+  <div id="remote-control-overlay" class="overlay">
+    <div class="panel-box mid">
+      <div class="panel-head"><h3 class="panel-title">Remote Control</h3><button class="modal-btn cancel" data-close="remote-control-overlay">Đóng</button></div>
+      <div class="panel-body">
+        <p class="download-meta">Điều khiển toàn bộ Nhà Yến Zalo từ một PC khác trong cùng mạng LAN.</p>
+        <div id="remote-off-state" class="card">
+          <div class="section-head"><strong>Remote access • off</strong><span class="pill">Đã tắt</span></div>
+          <button id="remote-start" class="modal-btn save w-full mt-16">Bật Remote LAN</button>
+        </div>
+        <div id="remote-on-state" class="card" hidden>
+          <div class="section-head"><strong>Remote access • on</strong><span id="remote-reach" class="pill done"></span></div>
+          <img id="remote-qr" alt="QR truy cập Remote Control" style="display:block;width:280px;max-width:100%;margin:18px auto;border-radius:8px">
+          <label class="muted" for="remote-url">Liên kết truy cập</label>
+          <div class="row"><input id="remote-url" class="modal-input" readonly style="margin:8px 0"><button id="remote-copy" class="modal-btn cancel">Sao chép</button></div>
+          <p class="muted">Bất kỳ ai có liên kết này đều có thể điều khiển các chức năng được cho phép. Hãy dừng Remote khi dùng xong.</p>
+          <button id="remote-stop" class="modal-btn warn w-full">Dừng Remote Control</button>
+        </div>
+        <p id="remote-error" class="error-text" role="alert"></p>
+      </div>
     </div>
   </div>
 
@@ -1179,6 +2083,7 @@
         placeholder="Nhập URL đầy đủ (VD: https://discord.com/app)"
         style="display:none;">
       <div class="row mt-16"><button class="modal-btn warn" id="modal-delete" style="display:none;">Xóa</button>
+        <button class="modal-btn cancel" id="modal-clear-cache" style="display:none;">Dọn cache (giữ đăng nhập)</button>
         <div><button class="modal-btn cancel" id="modal-cancel">Hủy</button><button class="modal-btn save"
             id="modal-save">Lưu</button></div>
       </div>
@@ -1188,24 +2093,26 @@
   <div id="update-overlay" class="overlay">
     <div class="panel-box">
       <div class="panel-head">
-        <h3 class="panel-title">Cập nhật ứng dụng</h3><button class="modal-btn cancel"
+        <div><h3 class="panel-title">Bản cập nhật mới</h3><p id="update-version-line" class="update-version-line"></p></div><button class="modal-btn cancel"
           data-close="update-overlay">Đóng</button>
       </div>
       <p id="update-status" class="download-meta">Sẵn sàng kiểm tra cập nhật.</p>
+      <div id="update-release-notes" class="update-notes"></div>
       <div class="progress"><span id="update-progress"></span></div>
-      <div style="margin-top:16px;text-align:right;"><button class="modal-btn cancel" id="update-check">Kiểm
-          tra</button><button class="modal-btn save" id="update-download" style="display:none;">Tải
-          xuống</button><button class="modal-btn save" id="update-install" style="display:none;">Cài đặt</button></div>
+      <div class="row" style="margin-top:16px;justify-content:flex-end;"><button class="modal-btn cancel" data-close="update-overlay">Để sau</button><button class="modal-btn cancel" id="update-check">Kiểm tra</button><button class="modal-btn save" id="update-download" style="display:none;">Cập nhật ngay</button><button class="modal-btn save" id="update-install" style="display:none;">Cài đặt ngay</button></div>
     </div>
   </div>
 
   <div id="lock-overlay" class="overlay">
     <div class="modal-box">
-      <h2 style="margin-top:10px;">🔒 Khóa ứng dụng</h2>
+      <h2 style="margin-top:10px;">Bảo vệ dữ liệu</h2>
       <p id="lock-hint" class="download-meta">Nhập mật khẩu để mở khóa.</p>
       <input type="password" id="lock-password" class="modal-input" placeholder="Mật khẩu">
       <input type="password" id="lock-password-confirm" class="modal-input" placeholder="Nhập lại mật khẩu"
         style="display:none;">
+      <label id="secure-remember-row" style="display:none; margin-top:8px; font-size:13px; color:#111;">
+        <input type="checkbox" id="secure-remember" checked> Ghi nhớ máy này (không hỏi lại mật khẩu trên máy này)
+      </label>
       <button class="modal-btn save w-full" id="lock-submit" style="margin-top:10px;">Mở khóa</button>
       <button class="modal-btn warn w-full" id="lock-remove" style="margin-top:8px; display:none;">Gỡ mật khẩu khóa</button>
     </div>
